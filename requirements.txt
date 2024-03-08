@@ -1,2 +1,4 @@
 python-dotenv==1.0.0
 synapseclient==4.1.1
+nibabel==5.2.1
+nilearn==0.10.3
