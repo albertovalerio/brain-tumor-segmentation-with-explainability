@@ -31,6 +31,8 @@ def plot_random_samples(folder, n_samples, axis):
 				axl[3].set_title('T2-weighted')
 				axl[4].set_title('Segmented')
 			for j, ax in enumerate(axl):
+				if j == 0:
+					ax.set_ylabel(samples[i])
 				brain_vol = nib.load(os.path.join(os.path.join(folder, samples[i]), images[j]))
 				isocenter = list(map(int, plotting.find_xyz_cut_coords(brain_vol)))
 				if j == len(images) - 1:
@@ -92,5 +94,10 @@ def plot_single_sample(folder):
 			ax.set_xlabel(a[i]+'='+str(isocenter[i]))
 			ax.get_xaxis().set_ticks([])
 			ax.get_yaxis().set_ticks([])
+	brain_vol = nib.load(os.path.join(os.path.join(folder, samples[0]), images[j - 1]))
+	brain_mask = nib.load(os.path.join(os.path.join(folder, samples[0]), images[j]))
+	plotting.plot_epi(brain_vol, display_mode='z', cmap='hot_white_bone', title=images[j - 1])
+	plotting.plot_epi(brain_mask, display_mode='z', cmap='hot_white_bone', title=images[j])
 	fig.tight_layout()
+	fig.suptitle(samples[0], fontsize=18)
 	plt.show()
