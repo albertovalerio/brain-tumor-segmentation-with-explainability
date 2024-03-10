@@ -90,14 +90,14 @@ def get_slice(spatial_image, axis, offset):
 	"""Get a 2D slice of a spatial image.
 	Args:
 		spatial_image (nibabel.nifti1.Nifti1Image): the spatial image.
-		axis (int): axis of the spatial image. Values are: 0=X_axis, 1=Y_axis, 2=Z_axis.
+		axis (int/str): axis of the spatial image. Values are: 0=X_axis, 1=Y_axis, 2=Z_axis.
 		offset (int): offset value where to cut the slice.
 	Returns:
 		slice (numpy.ndarray): the 2D slice.
 	"""
 	spatial_image_data = spatial_image.get_fdata()
 	slice = np.array([])
-	match axis:
+	match int(axis):
 		case 0:
 			slice = np.rot90(spatial_image_data[offset,:,:], 1)
 		case 1:
