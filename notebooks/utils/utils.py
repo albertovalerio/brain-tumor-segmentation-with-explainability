@@ -35,41 +35,33 @@ def make_dataset(dataset):
 			syn.login(authToken=_env.get('AUTH_TOKEN'))
 			print('Downloading files...')
 			files = synapseutils.syncFromSynapse(syn, _syn_id, path=_data_path)
-			paths = [
-				os.path.join(_data_path, [f.name for f in files if 'training' in f.name.lower()][0]),
-				os.path.join(_data_path, [f.name for f in files if 'validation' in f.name.lower()][0])
-			]
+			train_path = os.path.join(_data_path, [f.name for f in files if 'training' in f.name.lower()][0])
 			try:
 				print('Extracting files...')
-				for p in paths:
-					with zipfile.ZipFile(p, 'r') as zip_ref:
-						zip_ref.extractall(_data_path)
+				with zipfile.ZipFile(train_path, 'r') as zip_ref:
+					zip_ref.extractall(_data_path)
 				print('Finalizing...')
 				for i in os.listdir(_data_path):
 					full = os.path.join(_data_path, i)
 					if os.path.isfile(full):
 						os.unlink(full)
 				print('Operation completed!')
-				return [paths[0][:-4], paths[1][:-4]]
+				return train_path[:-4]
 			except OSError as e:
 				print(e)
 		else:
 			paths = [f for f in os.listdir(_data_path) if os.path.isdir(os.path.join(_data_path, f))]
-			paths = [
-				os.path.join(_data_path, [f for f in paths if 'training' in f.lower()][0]),
-				os.path.join(_data_path, [f for f in paths if 'validation' in f.lower()][0])
-			]
-			print('\n' + ''.join(['> ' for i in range(30)]))
+			train_path = os.path.join(_data_path, [f for f in paths if 'training' in f.lower()][0])
+			print('\n' + ''.join(['> ' for i in range(40)]))
 			print('\nWARNING: \033[95m '+dataset+'\033[0m directory not empty.\n')
-			print('TRAIN_PATH: \033[95m '+'/'.join(paths[0].split('/')[-2:])+'\033[0m')
-			print('EVAL_PATH: \033[95m '+'/'.join(paths[1].split('/')[-2:])+'\033[0m \n')
-			print(''.join(['> ' for i in range(30)]) + '\n')
-			return paths if len(paths) == 2 else ['', '']
+			print('DATA_PATH: \033[95m '+'/'.join(train_path.split('/')[-2:])+'\033[0m\n')
+			print(''.join(['> ' for i in range(40)]) + '\n')
+			return train_path if len(paths) == 1 else ''
 	else:
-		print('\n' + ''.join(['> ' for i in range(30)]))
+		print('\n' + ''.join(['> ' for i in range(40)]))
 		print('\nERROR: missing auth token! Please check your\033[95m .env\033[0m file.\n')
-		print(''.join(['> ' for i in range(30)]) + '\n')
-		return ['','']
+		print(''.join(['> ' for i in range(40)]) + '\n')
+		return ''
 
 
 def get_colored_mask(mask):

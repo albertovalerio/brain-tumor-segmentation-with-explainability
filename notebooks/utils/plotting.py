@@ -101,3 +101,27 @@ def plot_single_sample(folder):
 	fig.tight_layout()
 	fig.suptitle(samples[0], fontsize=18)
 	plt.show()
+
+
+def plot_counter(folder):
+	"""Plot data counters.
+	Args:
+		folder (str): the path of the folder containing data.
+	Returns:
+		None.
+	"""
+	mr_sessions = sorted([f.split('-')[2] for f in os.listdir(folder)])
+	n_subjects = len(list(set(mr_sessions)))
+	mr_sessions = len(mr_sessions)
+	fig, ax = plt.subplots(1, 1, figsize=(18, 8))
+	bar_labels = ['MRI Sessions (n.'+str(mr_sessions)+')', 'Nr. Subjects (n.'+str(n_subjects)+')']
+	bars = ax.bar(['MRI Sessions', 'Nr. Subjects'], height=[mr_sessions, n_subjects], label=bar_labels, color=['#8fce00', '#ff8200'])
+	for rect in bars:
+		height = rect.get_height()
+		plt.text(rect.get_x() + rect.get_width() / 2.0, height, f'{height:.0f} ({height/mr_sessions*100:.2f}%)', ha='center', va='bottom')
+	plt.xlabel('DATA', labelpad=20)
+	plt.ylabel('COUNT', labelpad=20)
+	plt.title('EXPLORING DATA')
+	plt.legend()
+	fig.tight_layout()
+	plt.show()
