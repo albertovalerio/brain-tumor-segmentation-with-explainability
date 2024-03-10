@@ -18,7 +18,7 @@ def make_dataset(dataset):
 	Args:
 		dataset (str): the dataset name (See SYN_IDS keys in config.py).
 	Returns:
-		paths (list): the full path of the training and evaluation sets.
+		data_path (str): the full path of the dataset folder.
 	"""
 	_base_path = '\\'.join(os.getcwd().split('\\')[:-1]) + '\\' if platform == 'win32' else '/'.join(os.getcwd().split('/')[:-1]) + '/'
 	_config = get_config()
