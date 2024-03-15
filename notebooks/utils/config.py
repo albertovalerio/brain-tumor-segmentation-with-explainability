@@ -9,7 +9,24 @@ CONFIG = {
 		'meningioma':	'syn51514106',
 		'metastasis':	'syn51514107',
 		'pediatric':	'syn51514108'
-	}
+	},
+	'CHANNELS':			[
+		'post-contrast T1-weighted',
+		'T1-native',
+		'T2-FLAIR',
+		'T2-weighted',
+		'segmentation mask'
+	],
+	'LABELS': 			[
+		'NCR (necrotic tumor core)',
+		'ED (peritumoral edematous/invaded tissue)',
+		'ET (GD-enhancing tumor)'
+	],
+	'CLASSES':			[
+		'ET (Enhancing Tumor)',
+		'TC (Tumor Core)',
+		'WT (Whole Tumor)'
+	]
 }
 
 
