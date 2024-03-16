@@ -28,7 +28,8 @@ CONFIG = {
 		'ET (Enhancing Tumor)',
 		'TC (Tumor Core)',
 		'WT (Whole Tumor)'
-	]
+	],
+	'REMOTE_DATA': 'https://unibari-my.sharepoint.com/:u:/g/personal/a_valerio31_studenti_uniba_it/EU0C24jfgUZHqolXloD_K30BpZRdt3TI1L3MAWtkJO0zCg?e=BGHc9n&download=1'
 }
 
 

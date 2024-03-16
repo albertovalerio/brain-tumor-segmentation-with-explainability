@@ -1,17 +1,18 @@
 """
 A set of utility functions
 """
-import os
-import random
+import os, sys, zipfile
 from sys import platform
-from dotenv import dotenv_values
-import zipfile
-import synapseclient
-import synapseutils
+from shutil import rmtree
 import numpy as np
 import torch
 import nibabel as nib
+from monai.data.meta_tensor import MetaTensor
 from config import get_config
+if not ('google.colab' in sys.modules):
+	from dotenv import dotenv_values
+	import synapseclient
+	import synapseutils
 
 
 def make_dataset(dataset, verbose=True):
@@ -70,6 +71,45 @@ def make_dataset(dataset, verbose=True):
 		return ''
 
 
+def make_dataset_on_colab(dataset, verbose=True):
+	"""
+	Import the dataset from a remote source and extract the data on Google Colab.
+	Args:
+		dataset (str): the dataset name.
+		verbose (bool): whether or not print information.
+	Returns:
+		data_path (str): the full path of the dataset folder.
+	"""
+	_config = get_config()
+	remote_data = _config.get('REMOTE_DATA')
+	base_path = '/content'
+	data_zip = os.path.join(base_path, dataset + '.zip')
+	data_path = os.path.join(base_path, dataset, 'ASNR-MICCAI-BraTS2023-GLI-Challenge-TrainingData')
+	if not os.path.isdir(data_path):
+		print('Downloading files...')
+		os.system('wget --no-check-certificate -O '+data_zip+' "'+remote_data+'"')
+		try:
+			print('Extracting files...')
+			with zipfile.ZipFile(data_zip, 'r') as zip_ref:
+				zip_ref.extractall(base_path)
+			print('Finalizing...')
+			ko = os.path.join(base_path, '__MACOSX')
+			if os.path.isdir(ko):
+				rmtree(ko)
+				os.unlink(data_zip)
+			print('Operation completed!')
+			return data_path
+		except OSError as e:
+			print(e)
+	else:
+		if verbose:
+			print('\n' + ''.join(['> ' for i in range(40)]))
+			print('\nWARNING: \033[95m '+dataset+'\033[0m directory not empty.\n')
+			print('DATA_PATH: \033[95m '+data_path+'\033[0m\n')
+			print(''.join(['> ' for i in range(40)]) + '\n')
+		return data_path
+
+
 def get_colored_mask(mask):
 	"""
 	Convert 2D segmentation mask into RGBA image.
@@ -126,7 +166,7 @@ def get_brats_classes(mask):
 	result.append(base_class.logical_or(mask == 1., mask == 3.))
 	# merge labels 1, 2 and 3 to construct WT
 	result.append(base_class.logical_or(base_class.logical_or(mask == 2., mask == 3.), mask == 1.))
-	classes_imgs = base_class.stack(result, axis=0).astype(int if base_class is np else float)
+	classes_imgs = base_class.stack(result, axis=0).astype(int) if base_class is np else MetaTensor(base_class.stack(result, axis=0).float())
 	return classes_imgs
 
 
