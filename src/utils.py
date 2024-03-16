@@ -6,17 +6,18 @@ import random
 from sys import platform
 from dotenv import dotenv_values
 import zipfile
-from utils.config import get_config
 import synapseclient
 import synapseutils
 import numpy as np
 import torch
 import nibabel as nib
+from config import get_config
 
 
 def make_dataset(dataset, verbose=True):
-	"""Import the dataset from a remote source and extract the data.
-	NOTE: 	A valid Synapse authentication token required in .env file.
+	"""
+	Import the dataset from a remote source and extract the data.
+	NOTE: 	A valid Synapse authentication token is required in .env file.
 			Please see: https://www.synapse.org/#!PersonalAccessTokens:
 	Args:
 		dataset (str): the dataset name (See SYN_IDS keys in config.py).
@@ -70,7 +71,8 @@ def make_dataset(dataset, verbose=True):
 
 
 def get_colored_mask(mask):
-	"""Convert 2D segmentation mask into RGBA image.
+	"""
+	Convert 2D segmentation mask into RGBA image.
 	Args:
 		mask (numpy.ndarray): the 2D mask.
 	Returns:
@@ -98,7 +100,8 @@ def get_colored_mask(mask):
 
 
 def get_brats_classes(mask):
-	"""Convert labels to multi channels based on BraTS-2023 classes:
+	"""
+	Convert labels to multi channels based on BraTS-2023 classes:
     	- label 1 (NCR): the necrotic tumor core
     	- label 2 (ED): the peritumoral edematous/invaded tissue
     	- label 3 (ET): the GD-enhancing tumor
@@ -111,25 +114,25 @@ def get_brats_classes(mask):
 	Returns:
 		classes_imgs (numpy.ndarray): the 4D matrix, 1-dim correspond to different classes.
 	"""
-	mask = mask.get_fdata()
-	classes_imgs = np.zeros((3, mask.shape[0], mask.shape[1], mask.shape[2]), dtype='uint8')
-	for i in range(mask.shape[0]):
-		for j in range(mask.shape[1]):
-			for k in range(mask.shape[2]):
-				# label 3 is ET
-				if mask[i][j][k] == 3.:
-					classes_imgs[0][i][j][k] = 1
-				# merge label 1 and label 3 to construct TC
-				if mask[i][j][k] == 1. or mask[i][j][k] == 3.:
-					classes_imgs[1][i][j][k] = 1
-				# merge labels 1, 2 and 3 to construct WT
-				if mask[i][j][k] != 0.:
-					classes_imgs[2][i][j][k] = 1
+	if type(mask) is nib.nifti1.Nifti1Image:
+		mask = mask.get_fdata()
+		base_class = np
+	else:
+		base_class = torch
+	result = []
+	# label 3 is ET
+	result.append(mask == 3.)
+	# merge label 1 and label 3 to construct TC
+	result.append(base_class.logical_or(mask == 1., mask == 3.))
+	# merge labels 1, 2 and 3 to construct WT
+	result.append(base_class.logical_or(base_class.logical_or(mask == 2., mask == 3.), mask == 1.))
+	classes_imgs = base_class.stack(result, axis=0).astype(int if base_class is np else float)
 	return classes_imgs
 
 
 def get_slice(spatial_image, axis, offset):
-	"""Get a 2D slice of a spatial image.
+	"""
+	Get a 2D slice of a spatial image.
 	Args:
 		spatial_image (nibabel.nifti1.Nifti1Image/numpy.ndarray): the spatial image.
 		axis (int/str): axis of the spatial image. Values are: 0=X_axis, 1=Y_axis, 2=Z_axis.
@@ -152,51 +155,9 @@ def get_slice(spatial_image, axis, offset):
 	return slice
 
 
-def train_test_splitting(folder, train_ratio=.8, verbose=True):
-	"""Splitting train/test.
-	Args:
-		folder (str): the path of the folder containing data.
-		train_ratio (float): ratio of the training set, value between 0 and 1.
-		verbose (bool): whether or not print information.
-	Returns:
-		train_data (list): the training data ready to feed monai.data.Dataset
-		test_data (list): the testing data ready to feed monai.data.Dataset.
-		(see https://docs.monai.io/en/latest/data.html#monai.data.Dataset).
-	"""
-	sessions = [s.split('-')[2] for s in os.listdir(folder)]
-	subjects = list(set(sessions))
-	random.shuffle(subjects)
-	split = int(len(subjects) * train_ratio)
-	train_subjects, test_subjects = subjects[:split], subjects[split:]
-	train_sessions = [os.path.join(folder, s) for s in os.listdir(folder) if s.split('-')[2] in train_subjects]
-	test_sessions = [os.path.join(folder, s) for s in os.listdir(folder) if s.split('-')[2] in test_subjects]
-	train_labels = [os.path.join(s, s.split('/')[-1] + '-seg.nii.gz') for s in train_sessions]
-	test_labels = [os.path.join(s, s.split('/')[-1] + '-seg.nii.gz') for s in test_sessions]
-	modes = ['t1c', 't1n', 't2f', 't2w']
-	train_data, test_data = {}, {}
-	train_data = [dict({
-		'image': [os.path.join(s, s.split('/')[-1] + '-' + m + '.nii.gz') for m in modes],
-		'label':train_labels[i]
-	}) for i, s in enumerate(train_sessions)]
-	test_data = [dict({
-		'image': [os.path.join(s, s.split('/')[-1] + '-' + m + '.nii.gz') for m in modes],
-		'label':test_labels[i]
-	}) for i, s in enumerate(test_sessions)]
-	if verbose:
-		print(''.join(['> ' for i in range(30)]))
-		print(f'\n{"":<20}{"TRAINING":<20}{"TESTING":<20}\n')
-		print(''.join(['> ' for i in range(30)]))
-		tsb1 = str(len(train_subjects)) + ' (' + str(round((len(train_subjects) * 100 / len(subjects)), 1)) + ' %)'
-		tsb2 = str(len(test_subjects)) + ' (' + str(round((len(test_subjects) * 100 / len(subjects)), 1)) + ' %)'
-		tss1 = str(len(train_sessions)) + ' (' + str(round((len(train_sessions) * 100 / len(sessions)), 2)) + ' %)'
-		tss2 = str(len(test_sessions)) + ' (' + str(round((len(test_sessions) * 100 / len(sessions)), 2)) + ' %)'
-		print(f'\n{"subjects":<20}{tsb1:<20}{tsb2:<20}\n')
-		print(f'{"sessions":<20}{tss1:<20}{tss2:<20}\n')
-	return train_data, test_data
-
-
 def get_device():
-	"""Returns the device available on the current machine
+	"""
+	Returns the device available on the current machine.
 	Args: None
 	Returns:
 		device (str): name of the device available.
@@ -207,3 +168,4 @@ def get_device():
 	elif torch.cuda.is_available():
 		device = 'cuda'
 	return device
+

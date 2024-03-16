@@ -6,12 +6,13 @@ import random
 import os
 from nilearn import plotting
 import nibabel as nib
-from utils.utils import get_colored_mask, get_slice, get_brats_classes
-from utils.config import get_config
+from utils import get_colored_mask, get_slice, get_brats_classes
+from config import get_config
 
 
 def plot_random_samples(folder, n_samples, axis):
-	"""Plot sample data.
+	"""
+	Plot a comparison between different n data examples.
 	Args:
 		folder (str): the path of the folder containing data.
 		n_samples (int): number of samples to plot. Min value is 2.
@@ -59,7 +60,8 @@ def plot_random_samples(folder, n_samples, axis):
 
 
 def plot_single_sample(folder, session=None):
-	"""Plot sample data.
+	"""
+	Plot different views of a single sample data.
 	Args:
 		folder (str): the path of the folder containing data.
 		session (str): a session ID, if not provided a random ID will be selected.
@@ -105,7 +107,8 @@ def plot_single_sample(folder, session=None):
 
 
 def plot_counter(folder):
-	"""Plot data counters.
+	"""
+	Plot data counters.
 	Args:
 		folder (str): the path of the folder containing data.
 	Returns:
@@ -129,7 +132,8 @@ def plot_counter(folder):
 
 
 def plot_brats_classes(folder, session=None, axis=2):
-	"""Plot data counters.
+	"""
+	Plot data labels and data classes according to BraTS-2023.
 	Args:
 		folder (str): the path of the folder containing data.
 		session (str): a session ID, if not provided a random ID will be selected.
@@ -164,7 +168,8 @@ def plot_brats_classes(folder, session=None, axis=2):
 
 
 def plot_input_output(example):
-	"""Plot data counters.
+	"""
+	Plot data input after preprocessing and data output according to BraTS-2023.
 	Args:
 		example (dict): an example returned from Dataloader.
 	Returns:
@@ -193,5 +198,6 @@ def plot_input_output(example):
 		plt.subplot(1, 3, i + 1)
 		plt.title(classes[i])
 		plt.axis('off')
-		plt.imshow(example['label'][i, :, :, 60].detach().cpu())
+		plt.imshow(example['label'][i, :, :, 80].detach().cpu())
 	plt.show()
+
