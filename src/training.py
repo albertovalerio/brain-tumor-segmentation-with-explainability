@@ -1,15 +1,10 @@
 """
 Functions for training the models.
 """
-import os
+import os, random, time, datetime, calendar, csv
 from sys import platform
-import random
-import time
-import datetime
 import torch
 import numpy as np
-from config import get_config
-
 from monai.data import DataLoader, decollate_batch, CacheDataset
 from monai.losses import DiceLoss
 from monai.inferers import sliding_window_inference
@@ -73,7 +68,18 @@ def train_test_splitting(folder, train_ratio=.8, verbose=True):
 	return train_data, eval_data, test_data
 
 
-def training_model(model, data, transforms, epochs, val_interval, device, paths, verbose=False):
+def training_model(
+		model,
+		data,
+		transforms,
+		epochs,
+		val_interval,
+		device,
+		paths,
+		ministep=10,
+		write_to_file=True,
+		verbose=False
+	):
 	"""
 	Standard Pythorch training program.
 	Args:
@@ -84,7 +90,8 @@ def training_model(model, data, transforms, epochs, val_interval, device, paths,
 		val_interval (int): validation interval.
 		device (str): device's name.
 		paths (list): folders where to save results and model's dump.
-		verbose (bool): whether to print minimal or extanded information.
+		write_to_file (bool): whether to write results to csv file.
+		verbose (bool): whether to print minimal or extended information.
 	Returns:
 		None.
 	"""
@@ -110,6 +117,7 @@ def training_model(model, data, transforms, epochs, val_interval, device, paths,
 	device = torch.device(device)
 	saved_path, reports_path = paths
 
+	ts = calendar.timegm(time.gmtime())
 	total_start = time.time()
 	for epoch in range(epochs):
 		epoch_start = time.time()
@@ -118,8 +126,8 @@ def training_model(model, data, transforms, epochs, val_interval, device, paths,
 		model.train()
 		epoch_loss_train, epoch_loss_eval = 0, 0
 		step_train, step_eval = 0, 0
-		ministeps_train = np.linspace(0, len(train_data), 10).astype(int)
-		ministeps_eval = np.linspace(0, len(eval_data), 10).astype(int)
+		ministeps_train = np.linspace(0, len(train_data), ministep).astype(int)
+		ministeps_eval = np.linspace(0, len(eval_data), ministep).astype(int)
 
 		# start training
 		for i in range(len(ministeps_train) - 1):
@@ -156,11 +164,16 @@ def training_model(model, data, transforms, epochs, val_interval, device, paths,
 					eval_ds = CacheDataset(eval_data[ministeps_eval[i]:ministeps_eval[i+1]], transform=eval_transform, cache_rate=1.0, num_workers=None, progress=False)
 					eval_loader = DataLoader(eval_ds, batch_size=1, shuffle=True, num_workers=4)
 					for val_data in eval_loader:
+						step_eval += 1
 						val_inputs, val_labels = (val_data['image'].to(device), val_data['label'].to(device))
 						val_outputs = _inference(val_inputs, device, model)
+						val_loss = loss_function(val_outputs, val_labels)
+						epoch_loss_eval += val_loss.item()
 						val_outputs = [post_trans(i) for i in decollate_batch(val_outputs)]
 						dice_metric(y_pred=val_outputs, y=val_labels)
 						dice_metric_batch(y_pred=val_outputs, y=val_labels)
+				epoch_loss_eval /= step_eval
+				epoch_loss_values[1].append(epoch_loss_eval)
 
 				# calculate metrics
 				metric = dice_metric.aggregate().item()
@@ -192,13 +205,34 @@ def training_model(model, data, transforms, epochs, val_interval, device, paths,
 				)
 		print(f"time consuming of epoch {epoch + 1} is: {str(datetime.timedelta(seconds=int(time.time() - epoch_start)))}")
 		epoch_time_values.append(time.time() - epoch_start)
-	total_time = time.time() - total_start
-	print(f"\n\nTrain completed! Best_metric: {best_metric:.4f} at epoch: {best_metric_epoch}, total time: {str(datetime.timedelta(seconds=int(total_time)))}.")
-	return (
-		epoch_loss_values,
+
+		# save results to file
+		if write_to_file:
+			_save_results(
+				file = os.path.join(reports_path, model.name + '_training.csv'),
+				metrics = {
+					'id': model.name.upper() + '_' + str(ts),
+					'epoch': epoch + 1,
+					'model': model.name,
+					'train_loss': epoch_loss_train,
+					'eval_loss': epoch_loss_eval,
+					'exec_time': time.time() - epoch_start,
+					'metric': metric,
+					'metric_et': metric_et,
+					'metric_tc': metric_tc,
+					'metric_wt': metric_wt
+				}
+			)
+	print(f"\n\nTrain completed! Best_metric: {best_metric:.4f} at epoch: {best_metric_epoch}, total time: {str(datetime.timedelta(seconds=int(time.time() - total_start)))}.")
+	return [
+		epoch_loss_values[0],
+		epoch_loss_values[1],
 		epoch_time_values,
-		[metric_values, metric_values_et, metric_values_tc, metric_values_wt]
-	)
+		metric_values,
+		metric_values_et,
+		metric_values_tc,
+		metric_values_wt
+	]
 
 
 def _inference(input, device, model):
@@ -208,7 +242,7 @@ def _inference(input, device, model):
 	def _compute(input):
 		return sliding_window_inference(
 			inputs=input,
-			roi_size=(240, 240, 155),
+			roi_size=(240, 240, 160),
 			sw_batch_size=1,
 			predictor=model,
 			overlap=0.5,
@@ -219,3 +253,21 @@ def _inference(input, device, model):
 	else:
 		return _compute(input)
 
+
+def _save_results(file, metrics):
+	"""Save the metrics to csv file.
+	Args:
+		file (str): the file path where to save data.
+		metrics (dict): the metrics of the experiment.
+	Returns:
+		None.
+	"""
+	if os.path.isfile(file):
+		with open(file, 'a', encoding='utf-8') as outfile:
+			csvwriter = csv.writer(outfile, delimiter=',')
+			csvwriter.writerow(metrics.values())
+	else:
+		with open(file, 'w', encoding='utf-8') as outfile:
+			csvwriter = csv.writer(outfile, delimiter=',')
+			csvwriter.writerow(metrics)
+			csvwriter.writerow(metrics.values())
