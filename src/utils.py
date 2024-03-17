@@ -4,6 +4,7 @@ A set of utility functions
 import os, sys, zipfile
 from sys import platform
 from shutil import rmtree
+from datetime import datetime
 import numpy as np
 import torch
 import nibabel as nib
@@ -209,3 +210,14 @@ def get_device():
 		device = 'cuda'
 	return device
 
+
+def get_date_time():
+	"""Convert the current date in a standard datetime format.
+	Args:
+		None.
+	Returns:
+		str: the datetime formatted.
+	"""
+	ts = datetime.timestamp(datetime.now())
+	date_time = datetime.fromtimestamp(ts)
+	return date_time.strftime("%Y-%m-%d %H:%M:%S")

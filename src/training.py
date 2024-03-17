@@ -1,15 +1,18 @@
 """
 Functions for training the models.
 """
-import os, random, time, datetime, calendar, csv
+import os, random, time, calendar, csv
 from sys import platform
+from datetime import datetime
 import torch
 import numpy as np
+import nibabel as nib
 from monai.data import DataLoader, decollate_batch, CacheDataset
 from monai.losses import DiceLoss
+from monai.metrics import DiceMetric, HausdorffDistanceMetric
 from monai.inferers import sliding_window_inference
-from monai.metrics import DiceMetric
-from monai.transforms import Activations, AsDiscrete, Compose
+from monai.handlers.utils import from_engine
+from utils import get_date_time
 
 
 def train_test_splitting(folder, train_ratio=.8, verbose=True):
@@ -76,12 +79,13 @@ def training_model(
 		val_interval,
 		device,
 		paths,
+		num_workers=4,
 		ministep=10,
 		write_to_file=True,
 		verbose=False
 	):
 	"""
-	Standard Pythorch training program.
+	Standard Pytorch-style training program.
 	Args:
 		model (torch.nn.Module): the model to be trained.
 		data (list): the training and evalutaion data.
@@ -90,6 +94,8 @@ def training_model(
 		val_interval (int): validation interval.
 		device (str): device's name.
 		paths (list): folders where to save results and model's dump.
+		num_workers (int): setting multi-process data loading.
+		ministep (int): number of interval of data to load on RAM.
 		write_to_file (bool): whether to write results to csv file.
 		verbose (bool): whether to print minimal or extended information.
 	Returns:
@@ -99,9 +105,8 @@ def training_model(
 	loss_function = DiceLoss(smooth_nr=0, smooth_dr=1e-5, squared_pred=True, to_onehot_y=False, sigmoid=True)
 	optimizer = torch.optim.Adam(model.parameters(), 1e-4, weight_decay=1e-5)
 	lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
-	dice_metric = DiceMetric(include_background=True, reduction="mean")
-	dice_metric_batch = DiceMetric(include_background=True, reduction="mean_batch")
-	post_trans = Compose([Activations(sigmoid=True), AsDiscrete(threshold=0.5)])
+	dice_metric = DiceMetric(include_background=True, reduction='mean')
+	dice_metric_batch = DiceMetric(include_background=True, reduction='mean_batch')
 	scaler = torch.cuda.amp.GradScaler() # use Automatic Pixed Precision to accelerate training
 	torch.backends.cudnn.benchmark = True # enable cuDNN benchmark
 
@@ -113,9 +118,10 @@ def training_model(
 
 	# unfolds grouped data
 	train_data, eval_data = data
-	train_transform, eval_transform = transforms
+	train_transform, eval_transform, post_trans = transforms
 	device = torch.device(device)
 	saved_path, reports_path = paths
+	ministep = ministep if (len(train_data) > 5 and len(eval_data) > 5 and ministep > 1) else 2
 
 	ts = calendar.timegm(time.gmtime())
 	total_start = time.time()
@@ -132,7 +138,7 @@ def training_model(
 		# start training
 		for i in range(len(ministeps_train) - 1):
 			train_ds = CacheDataset(train_data[ministeps_train[i]:ministeps_train[i+1]], transform=train_transform, cache_rate=1.0, num_workers=None, progress=False)
-			train_loader = DataLoader(train_ds, batch_size=1, shuffle=True, num_workers=4)
+			train_loader = DataLoader(train_ds, batch_size=1, shuffle=True, num_workers=num_workers)
 			for batch_data in train_loader:
 				step_start = time.time()
 				step_train += 1
@@ -162,11 +168,11 @@ def training_model(
 			with torch.no_grad():
 				for i in range(len(ministeps_eval) - 1):
 					eval_ds = CacheDataset(eval_data[ministeps_eval[i]:ministeps_eval[i+1]], transform=eval_transform, cache_rate=1.0, num_workers=None, progress=False)
-					eval_loader = DataLoader(eval_ds, batch_size=1, shuffle=True, num_workers=4)
+					eval_loader = DataLoader(eval_ds, batch_size=1, shuffle=True, num_workers=num_workers)
 					for val_data in eval_loader:
 						step_eval += 1
 						val_inputs, val_labels = (val_data['image'].to(device), val_data['label'].to(device))
-						val_outputs = _inference(val_inputs, device, model)
+						val_outputs = inference(val_inputs, device, model)
 						val_loss = loss_function(val_outputs, val_labels)
 						epoch_loss_eval += val_loss.item()
 						val_outputs = [post_trans(i) for i in decollate_batch(val_outputs)]
@@ -214,13 +220,14 @@ def training_model(
 					'id': model.name.upper() + '_' + str(ts),
 					'epoch': epoch + 1,
 					'model': model.name,
-					'train_loss': epoch_loss_train,
-					'eval_loss': epoch_loss_eval,
+					'train_dice_loss': epoch_loss_train,
+					'eval_dice_loss': epoch_loss_eval,
 					'exec_time': time.time() - epoch_start,
-					'metric': metric,
-					'metric_et': metric_et,
-					'metric_tc': metric_tc,
-					'metric_wt': metric_wt
+					'dice_score': metric,
+					'dice_score_et': metric_et,
+					'dice_score_tc': metric_tc,
+					'dice_score_wt': metric_wt,
+					'datetime': get_date_time()
 				}
 			)
 	print(f"\n\nTrain completed! Best_metric: {best_metric:.4f} at epoch: {best_metric_epoch}, total time: {str(datetime.timedelta(seconds=int(time.time() - total_start)))}.")
@@ -235,17 +242,121 @@ def training_model(
 	]
 
 
-def _inference(input, device, model):
+def predict_model(
+	model,
+	data,
+	transforms,
+	device,
+	paths,
+	ministep=3,
+	num_workers=4,
+	write_to_file=False,
+	save_sample=True,
+	verbose=True
+):
+	"""
+	Standard Pytorch-style prediction program.
+	Args:
+		model (torch.nn.Module): the model to be loaded.
+		data (list): the testing data.
+		transform (list): pre and post transformations for testing data.
+		device (str): device's name.
+		paths (list): folders where to save results and load model's dump.
+		num_workers (int): setting multi-process data loading.
+		ministep (int): number of interval of data to load on RAM.
+		write_to_file (bool): whether to write results to csv file.
+		save_sample (bool): whether to save predicted image samples.
+		verbose (bool): whether or not print information.
+	Returns:
+		None.
+	"""
+	# define metrics
+	dice_metric_batch = DiceMetric(include_background=True, reduction='mean_batch')
+	hausdorff_metric_batch = HausdorffDistanceMetric(include_background=True, reduction='mean_batch', percentile=95)
+
+	# define utils
+	samples, counter = [], 0
+	sample_ids = random.sample(range(0, len(data)), 3)
+	ministep = ministep if (len(data) > 5 and ministep > 1) else 2
+	ministeps_test = np.linspace(0, len(data), ministep).astype(int)
+
+	# unfolds grouped data
+	test_transform, post_test_transforms = transforms
+	device = torch.device(device)
+	saved_path, reports_path, preds_path = paths
+
+	try:
+		# load pretrained model
+		model.load_state_dict(
+			torch.load(os.path.join(saved_path, model.name + '_best.pth'), map_location=torch.device(device))
+		)
+		model.eval()
+		# making inference
+		with torch.no_grad():
+			for i in range(len(ministeps_test) - 1):
+				test_ds = CacheDataset(data[ministeps_test[i]:ministeps_test[i+1]], transform=test_transform, cache_rate=1.0, num_workers=None, progress=False)
+				test_loader = DataLoader(test_ds, batch_size=1, shuffle=False, num_workers=num_workers)
+				for val_data in test_loader:
+					val_inputs = val_data['image'].to(device)
+					val_data['pred'] = inference(val_inputs, device, model)
+					val_data = [post_test_transforms(i) for i in decollate_batch(val_data)]
+					if counter in sample_ids:
+						samples.append({'image': val_data[0]['image'], 'label': val_data[0]['label'], 'pred': val_data[0]['pred']})
+					val_outputs, val_labels = from_engine(['pred', 'label'])(val_data)
+					# compute metrics
+					dice_metric_batch(y_pred=val_outputs, y=val_labels)
+					hausdorff_metric_batch(y_pred=val_outputs, y=val_labels)
+					counter += 1
+					if verbose and ((counter - 1) == 0 or (counter % 20) == 0):
+						print(f"inference {counter}/{len(data)}")
+			dice_batch_org = dice_metric_batch.aggregate()
+			hausdorff_batch_org = hausdorff_metric_batch.aggregate()
+			dice_metric_batch.reset()
+			hausdorff_metric_batch.reset()
+			metrics = [[i.item() for i in dice_batch_org], [j.item() for j in hausdorff_batch_org]]
+
+			# save results to file
+			if write_to_file:
+				_save_results(
+					file = os.path.join(reports_path, 'results.csv'),
+					metrics = {
+						'model': model.name,
+						'dice_score_et': metrics[0][0],
+						'dice_score_tc': metrics[0][1],
+						'dice_score_wt': metrics[0][2],
+						'hausdorff_score_et': metrics[1][0],
+						'hausdorff_score_tc': metrics[1][1],
+						'hausdorff_score_wt': metrics[1][2],
+						'datetime': get_date_time()
+					}
+				)
+			# save samples images
+			if save_sample:
+				for i, s in enumerate(samples):
+					for k in s.keys():
+						nii_image = nib.Nifti1Image(s[k].detach().cpu().numpy(), affine=np.eye(4))
+						filename = model.name + '_sample_' + str(i + 1) + '_' + k + '.nii'
+						nib.save(nii_image, os.path.join(preds_path, filename))
+
+			return samples, metrics
+	except OSError as e:
+		print('\n' + ''.join(['> ' for i in range(30)]))
+		print('\nERROR: model dump for\033[95m '+model.name+'\033[0m not found.\n')
+		print(''.join(['> ' for i in range(30)]) + '\n')
+
+
+def inference(input, device, model, opts={}):
 	"""
 	Define inference method.
 	"""
+	device = torch.device(device) if type(device) is str else device
 	def _compute(input):
 		return sliding_window_inference(
 			inputs=input,
-			roi_size=(240, 240, 160),
-			sw_batch_size=1,
+			roi_size=opts['roi_size'] if 'roi_size' in opts else (240, 240, 160),
+			sw_batch_size=opts['sw_batch_size'] if 'sw_batch_size' in opts else 1,
 			predictor=model,
-			overlap=0.5,
+			overlap=opts['overlap'] if 'overlap' in opts else .5,
 		)
 	if device.type == 'cuda':
 		with torch.cuda.amp.autocast():

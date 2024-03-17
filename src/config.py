@@ -5,6 +5,7 @@ CONFIG = {
 	'DATA_FOLDER':			'data/',
 	'SAVED_FOLDER': 		'saved/',
 	'REPORTS_FOLDER':		'reports/',
+	'PRED_FOLDER':			'predictions/',
 	'SYN_IDS':				{
 		'glioma':		'syn51514105',
 		'africa':		'syn51514109',
