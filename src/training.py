@@ -79,7 +79,7 @@ def training_model(
 		paths,
 		val_interval=1,
 		num_workers=4,
-		ministep=10,
+		ministep=12,
 		write_to_file=True,
 		verbose=False
 	):
@@ -264,11 +264,11 @@ def predict_model(
 	transforms,
 	device,
 	paths,
-	ministep=3,
+	ministep=4,
 	num_workers=4,
-	write_to_file=False,
+	write_to_file=True,
 	save_sample=True,
-	verbose=True
+	verbose=False
 ):
 	"""
 	Standard Pytorch-style prediction program.

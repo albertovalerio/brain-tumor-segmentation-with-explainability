@@ -142,24 +142,20 @@ if __name__ == "__main__":
 	# training model
 	_ = training_model(
 		model = SegResNet(init_filters=16, in_channels=4, out_channels=3, dropout_prob=0.2),
-		data = [train_data[:20], eval_data[:5]],
+		data = [train_data, eval_data],
 		transforms = [train_transform, eval_transform, post_trans],
-		epochs = 6,
-		device = 'cpu',
-		paths = [saved_path, reports_path, logs_path],
-		num_workers=0,
-		verbose=True
+		epochs = 200,
+		device = get_device(),
+		paths = [saved_path, reports_path, logs_path]
 	)
 
 	# making predictions
 	_ = predict_model(
 		model = SegResNet(init_filters=16, in_channels=4, out_channels=3, dropout_prob=0.2),
-		data = test_data[:20],
+		data = test_data,
 		transforms = [test_transform, post_test_transforms],
-		device = 'cpu',
-		paths = [saved_path, reports_path, preds_path, logs_path],
-		num_workers=0,
-		write_to_file=True
+		device = get_device(),
+		paths = [saved_path, reports_path, preds_path, logs_path]
 	)
 
 	sys.exit(0)
