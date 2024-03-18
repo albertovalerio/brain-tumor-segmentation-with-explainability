@@ -1,9 +1,8 @@
 """
 Functions for training the models.
 """
-import os, random, time, calendar, csv
+import os, random, time, calendar, datetime, csv
 from sys import platform
-from datetime import datetime
 import torch
 import numpy as np
 import nibabel as nib
@@ -76,9 +75,9 @@ def training_model(
 		data,
 		transforms,
 		epochs,
-		val_interval,
 		device,
 		paths,
+		val_interval=1,
 		num_workers=4,
 		ministep=10,
 		write_to_file=True,
@@ -91,16 +90,24 @@ def training_model(
 		data (list): the training and evalutaion data.
 		transform (list): transformation sequence for training and evaluation data.
 		epochs (int): max number of epochs.
-		val_interval (int): validation interval.
 		device (str): device's name.
 		paths (list): folders where to save results and model's dump.
+		val_interval (int): validation interval.
 		num_workers (int): setting multi-process data loading.
 		ministep (int): number of interval of data to load on RAM.
 		write_to_file (bool): whether to write results to csv file.
 		verbose (bool): whether to print minimal or extended information.
 	Returns:
-		None.
+		metrics (list): the list of all the computed metrics over the training in this order:
+			- dice loss during training;
+			- dice loss during evaluation;
+			- execution times;
+			- average dice score;
+			- dice score for the class ET;
+			- dice score for the class TC;
+			- dice score for the class WT.
 	"""
+	model = model.to(device)
 	# define Dice loss, Adam optimizer, mean Dice metric, Cosine Annealing scheduler
 	loss_function = DiceLoss(smooth_nr=0, smooth_dr=1e-5, squared_pred=True, to_onehot_y=False, sigmoid=True)
 	optimizer = torch.optim.Adam(model.parameters(), 1e-4, weight_decay=1e-5)
@@ -120,15 +127,21 @@ def training_model(
 	train_data, eval_data = data
 	train_transform, eval_transform, post_trans = transforms
 	device = torch.device(device)
-	saved_path, reports_path = paths
-	ministep = ministep if (len(train_data) > 5 and len(eval_data) > 5 and ministep > 1) else 2
+	saved_path, reports_path, logs_path = paths
+	ministep = ministep if (len(train_data) > 10 and len(eval_data) > 10 and ministep > 1) else 2
 
+	# log the current execution
+	log = open(os.path.join(logs_path, 'training.log'), 'a', encoding='utf-8')
+	log.write('['+get_date_time()+'] Training phase started.EXECUTING: ' + model.name + '\n')
+	log.flush()
 	ts = calendar.timegm(time.gmtime())
 	total_start = time.time()
 	for epoch in range(epochs):
 		epoch_start = time.time()
 		print(''.join(['> ' for i in range(30)]))
 		print(f"epoch {epoch + 1}/{epochs}")
+		log.write('['+get_date_time() + '] EXECUTING.' + model.name + ' EPOCH ' + str(epoch + 1) + ' OF ' + str(epochs) + ' \n')
+		log.flush()
 		model.train()
 		epoch_loss_train, epoch_loss_eval = 0, 0
 		step_train, step_eval = 0, 0
@@ -231,6 +244,9 @@ def training_model(
 				}
 			)
 	print(f"\n\nTrain completed! Best_metric: {best_metric:.4f} at epoch: {best_metric_epoch}, total time: {str(datetime.timedelta(seconds=int(time.time() - total_start)))}.")
+	log.write('['+get_date_time()+'] Training phase ended.EXECUTING: ' + model.name + '\n')
+	log.flush()
+	log.close()
 	return [
 		epoch_loss_values[0],
 		epoch_loss_values[1],
@@ -268,13 +284,14 @@ def predict_model(
 		save_sample (bool): whether to save predicted image samples.
 		verbose (bool): whether or not print information.
 	Returns:
-		None.
+		metrics (list): dice score and Hausdorff distance for each class.
 	"""
 	# define metrics
 	dice_metric_batch = DiceMetric(include_background=True, reduction='mean_batch')
 	hausdorff_metric_batch = HausdorffDistanceMetric(include_background=True, reduction='mean_batch', percentile=95)
 
 	# define utils
+	model = model.to(device)
 	samples, counter = [], 0
 	sample_ids = random.sample(range(0, len(data)), 3)
 	ministep = ministep if (len(data) > 5 and ministep > 1) else 2
@@ -283,7 +300,12 @@ def predict_model(
 	# unfolds grouped data
 	test_transform, post_test_transforms = transforms
 	device = torch.device(device)
-	saved_path, reports_path, preds_path = paths
+	saved_path, reports_path, preds_path, logs_path = paths
+
+	# log the current execution
+	log = open(os.path.join(logs_path, 'prediction.log'), 'a', encoding='utf-8')
+	log.write('['+get_date_time()+'] Predictions started.EXECUTING: ' + model.name + '\n')
+	log.flush()
 
 	try:
 		# load pretrained model
@@ -309,6 +331,8 @@ def predict_model(
 					counter += 1
 					if verbose and ((counter - 1) == 0 or (counter % 20) == 0):
 						print(f"inference {counter}/{len(data)}")
+						log.write('['+get_date_time()+'] EXECUTING.'+model.name+' INFERENCE '+str(counter)+' OF '+str(len(data))+' \n')
+						log.flush()
 			dice_batch_org = dice_metric_batch.aggregate()
 			hausdorff_batch_org = hausdorff_metric_batch.aggregate()
 			dice_metric_batch.reset()
@@ -321,6 +345,7 @@ def predict_model(
 					file = os.path.join(reports_path, 'results.csv'),
 					metrics = {
 						'model': model.name,
+						'n_images': len(data),
 						'dice_score_et': metrics[0][0],
 						'dice_score_tc': metrics[0][1],
 						'dice_score_wt': metrics[0][2],
@@ -338,7 +363,10 @@ def predict_model(
 						filename = model.name + '_sample_' + str(i + 1) + '_' + k + '.nii'
 						nib.save(nii_image, os.path.join(preds_path, filename))
 
-			return samples, metrics
+			log.write('['+get_date_time()+'] Predictions ended.EXECUTING: ' + model.name + '\n')
+			log.flush()
+			log.close()
+			return metrics
 	except OSError as e:
 		print('\n' + ''.join(['> ' for i in range(30)]))
 		print('\nERROR: model dump for\033[95m '+model.name+'\033[0m not found.\n')

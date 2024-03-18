@@ -16,7 +16,7 @@ if not ('google.colab' in sys.modules):
 	import synapseutils
 
 
-def make_dataset(dataset, verbose=True):
+def make_dataset(dataset, verbose=True, base_path=''):
 	"""
 	Import the dataset from a remote source and extract the data.
 	NOTE: 	A valid Synapse authentication token is required in .env file.
@@ -24,10 +24,14 @@ def make_dataset(dataset, verbose=True):
 	Args:
 		dataset (str): the dataset name (See SYN_IDS keys in config.py).
 		verbose (bool): whether or not print information.
+		base_path (str): project root directory.
 	Returns:
 		data_path (str): the full path of the dataset folder.
 	"""
-	_base_path = '\\'.join(os.getcwd().split('\\')[:-1]) + '\\' if platform == 'win32' else '/'.join(os.getcwd().split('/')[:-1]) + '/'
+	if base_path == '':
+		_base_path = '\\'.join(os.getcwd().split('\\')[:-1]) + '\\' if platform == 'win32' else '/'.join(os.getcwd().split('/')[:-1]) + '/'
+	else:
+		_base_path = base_path
 	_config = get_config()
 	_env = dotenv_values(os.path.join(_base_path, '.env'))
 	_syn_id = _config.get('SYN_IDS')[dataset]

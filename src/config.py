@@ -4,8 +4,9 @@ The collection of global configurations
 CONFIG = {
 	'DATA_FOLDER':			'data/',
 	'SAVED_FOLDER': 		'saved/',
-	'REPORTS_FOLDER':		'reports/',
+	'REPORT_FOLDER':		'reports/',
 	'PRED_FOLDER':			'predictions/',
+	'LOG_FOLDER':			'logs/',
 	'SYN_IDS':				{
 		'glioma':		'syn51514105',
 		'africa':		'syn51514109',

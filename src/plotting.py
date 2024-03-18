@@ -4,6 +4,7 @@ A set of plotting functions
 import os, random
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 from nilearn import plotting
 import nibabel as nib
 from utils import get_colored_mask, get_slice, get_brats_classes
@@ -216,14 +217,14 @@ def plot_training_values(model_name, folder):
 		df = pd.read_csv(p)
 		run_id = sorted(df['id'].unique())[0]
 		data_df = df[df['id'] == run_id]
-		best_epoch = data_df.iloc[data_df['metric'].idxmax()]['epoch']
+		best_epoch = data_df.iloc[data_df['dice_score'].idxmax()]['epoch']
 		x = [i + 1 for i in range(len(data_df))]
 		fig, ax = plt.subplots(1, 1, figsize=(18, 6))
-		ax.plot(x, data_df['train_loss'].to_numpy(), label='training_loss')
-		ax.plot(x, data_df['eval_loss'].to_numpy(), label='evaluation_loss')
+		ax.plot(x, data_df['train_dice_loss'].to_numpy(), label='training_loss')
+		ax.plot(x, data_df['eval_dice_loss'].to_numpy(), label='evaluation_loss')
 		ax.set_xticks([i for i in range(0, len(data_df), 5)])
 		plt.axvline(best_epoch, color='red')
-		plt.text(best_epoch - 3.2, data_df['train_loss'].max() / 2, 'best_run', rotation=0)
+		plt.text(best_epoch - 3.2, data_df['train_dice_loss'].max() / 2, 'best_run', rotation=0)
 		plt.xlabel('EPOCHS', fontsize=14)
 		plt.ylabel('DICE LOSS', fontsize=14)
 		plt.title('TRAINING LOSSES', fontsize=18)
@@ -231,12 +232,12 @@ def plot_training_values(model_name, folder):
 		fig.tight_layout()
 		plt.show()
 		fig, ax = plt.subplots(1, 1, figsize=(18, 6))
-		ax.plot(x, data_df['metric_et'].to_numpy(), label='enhancing_tumor')
-		ax.plot(x, data_df['metric_tc'].to_numpy(), label='tumor_core')
-		ax.plot(x, data_df['metric_wt'].to_numpy(), label='whole_tumor')
+		ax.plot(x, data_df['dice_score_et'].to_numpy(), label='enhancing_tumor')
+		ax.plot(x, data_df['dice_score_tc'].to_numpy(), label='tumor_core')
+		ax.plot(x, data_df['dice_score_wt'].to_numpy(), label='whole_tumor')
 		ax.set_xticks([i for i in range(0, len(data_df), 5)])
 		plt.axvline(best_epoch, color='red')
-		plt.text(best_epoch - 3.2, data_df['metric_wt'].max() / 2, 'best_run', rotation=0)
+		plt.text(best_epoch - 3.2, data_df['dice_score_wt'].max() / 2, 'best_run', rotation=0)
 		plt.xlabel('EPOCHS', fontsize=14)
 		plt.ylabel('DICE METRIC', fontsize=14)
 		plt.title('TRAINING METRICS', fontsize=18)
@@ -249,36 +250,32 @@ def plot_training_values(model_name, folder):
 		print(''.join(['> ' for i in range(30)]) + '\n')
 
 
-def plot_prediction(example):
+def plot_prediction(model_name, folder):
 	"""
 	Plot original image data, groundtruth label and predicted mask.
 	Args:
-		example (dict): dictionary containing data.
+		model_name (str): the model name. `model_name` is case sensitive.
+		folder (str): the path of the folder containing the csv reports.
 	Returns:
 		None.
 	"""
 	_config = get_config()
 	classes = _config.get('CLASSES')
 	channels = _config.get('CHANNELS')
-	plt.figure('image', (18, 6))
-	for i in range(4):
-		plt.subplot(1, 4, i + 1)
-		plt.title(channels[i])
-		plt.axis('off')
-		plt.imshow(example['image'][i, :, :, 80].detach().cpu(), cmap='gray')
-	plt.show()
-	plt.figure('label', (18, 6))
-	for i in range(3):
-		plt.subplot(1, 3, i + 1)
-		plt.title(classes[i] + ' - Groudtruth')
-		plt.axis('off')
-		plt.imshow(example['label'][i, :, :, 80].detach().cpu())
-	plt.show()
-	plt.figure('prediction', (18, 6))
-	for i in range(3):
-		plt.subplot(1, 3, i + 1)
-		plt.title(classes[i] + ' - Prediction')
-		plt.axis('off')
-		plt.imshow(example['pred'][i, :, :, 80].detach().cpu())
-	plt.show()
+	images = [i for i in os.listdir(folder) if '.nii' in i]
+	ids = list(set([int(i.split('_')[2]) for i in images]))
+	n = random.sample(ids, 1)[0]
+	kind = ['image', 'label', 'pred']
+	for i, k in enumerate(kind):
+		brain_vol = nib.load(os.path.join(folder, model_name + '_sample_' + str(n) + '_' + k + '.nii'))
+		brain_vol3d = nib.Nifti1Image(brain_vol.get_fdata()[0], affine=np.eye(4))
+		isocenter = list(map(int, plotting.find_xyz_cut_coords(brain_vol3d)))
+		brain_vol_data = brain_vol.get_fdata()
+		plt.figure('image', (18, 6))
+		for j in range(4 if i == 0 else 3):
+			plt.subplot(1, 4 if i == 0 else 3, j + 1)
+			plt.title(k + '_' + str(n) + ' - ' + (channels[j] if i == 0 else classes[j]))
+			plt.axis('off')
+			plt.imshow(brain_vol_data[j, :, :, isocenter[2]], cmap = 'gray' if i == 0 else 'viridis')
+		plt.show()
 
