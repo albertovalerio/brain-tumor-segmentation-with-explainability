@@ -144,7 +144,7 @@ if __name__ == "__main__":
 		model = SegResNet(init_filters=16, in_channels=4, out_channels=3, dropout_prob=0.2),
 		data = [train_data, eval_data],
 		transforms = [train_transform, eval_transform, post_trans],
-		epochs = 200,
+		epochs = 150,
 		device = get_device(),
 		paths = [saved_path, reports_path, logs_path],
 		verbose=True

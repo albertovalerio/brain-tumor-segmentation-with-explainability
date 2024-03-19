@@ -138,7 +138,7 @@ def training_model(
 	total_start = time.time()
 	for epoch in range(epochs):
 		epoch_start = time.time()
-		print(''.join(['> ' for i in range(30)]))
+		print(''.join(['> ' for i in range(40)]))
 		print(f"epoch {epoch + 1}/{epochs}")
 		log.write('['+get_date_time() + '] EXECUTING.' + model.name + ' EPOCH ' + str(epoch + 1) + ' OF ' + str(epochs) + ' \n')
 		log.flush()
