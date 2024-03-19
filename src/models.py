@@ -17,6 +17,7 @@ from monai.networks.blocks.segresnet_block import ResBlock, get_conv_layer, get_
 from monai.networks.layers.factories import Dropout
 from monai.networks.layers.utils import get_act_layer, get_norm_layer
 from monai.utils import UpsampleMode
+from typing import Optional, Union
 
 
 class SegResNet(nn.Module):
@@ -48,20 +49,20 @@ class SegResNet(nn.Module):
 
     def __init__(
         self,
-        spatial_dims: int = 3,
-        init_filters: int = 8,
-        in_channels: int = 1,
-        out_channels: int = 2,
-        dropout_prob: float | None = None,
-        act: tuple | str = ("RELU", {"inplace": True}),
-        norm: tuple | str = ("GROUP", {"num_groups": 8}),
-        norm_name: str = "",
-        num_groups: int = 8,
-        use_conv_final: bool = True,
-        blocks_down: tuple = (1, 2, 2, 4),
-        blocks_up: tuple = (1, 1, 1),
-        upsample_mode: UpsampleMode | str = UpsampleMode.NONTRAINABLE,
-        name: str = 'SegResNet',
+        spatial_dims: Optional[int] = 3,
+        init_filters: Optional[int] = 8,
+        in_channels: Optional[int] = 1,
+        out_channels: Optional[int] = 2,
+        dropout_prob: Union[float, None] = None,
+        act: Union[tuple, str] = ("RELU", {"inplace": True}),
+        norm: Union[tuple, str] = ("GROUP", {"num_groups": 8}),
+        norm_name: Optional[str] = "",
+        num_groups: Optional[int] = 8,
+        use_conv_final: Optional[bool] = True,
+        blocks_down: Optional[tuple] = (1, 2, 2, 4),
+        blocks_up: Optional[tuple] = (1, 1, 1),
+        upsample_mode: Union[UpsampleMode, str] = UpsampleMode.NONTRAINABLE,
+        name: Optional[str] = 'SegResNet',
     ):
         super().__init__()
         if spatial_dims not in (2, 3):
