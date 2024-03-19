@@ -6,3 +6,4 @@ matplotlib==3.7.1
 numpy==1.23.5
 monai==1.3.0
 torch==2.2.1
+einops==0.7.0

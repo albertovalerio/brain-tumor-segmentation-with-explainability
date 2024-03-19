@@ -26,7 +26,7 @@ from monai.utils import set_determinism
 from utils import make_dataset, get_device, get_brats_classes
 from training import train_test_splitting, training_model, predict_model
 from config import get_config
-from models import SegResNet
+from models import SegResNet, UNet
 
 
 # defining paths
@@ -42,6 +42,18 @@ if platform == 'win32':
 	preds_path = preds_path.replace('/', '\\')
 	logs_path = logs_path.replace('/', '\\')
 
+# defining models
+_models = {
+	'SegResNet': SegResNet(init_filters=16, in_channels=4, out_channels=3, dropout_prob=0.2),
+	'UNet': UNet(
+        spatial_dims=3,
+        in_channels=4,
+        out_channels=3,
+        channels=(16, 32, 64, 128, 256),
+        strides=(2, 2, 2, 2),
+        num_res_units=2,
+    )
+}
 
 # defining image transformations
 class ConvertToMultiChannelBasedOnBratsClassesd(MapTransform):
@@ -131,6 +143,9 @@ post_trans = Compose(
 
 if __name__ == "__main__":
 
+    # set model
+	model = _models['UNet']
+
 	# ensure reproducibility
 	set_determinism(seed=3)
 	random.seed(3)
@@ -141,21 +156,25 @@ if __name__ == "__main__":
 
 	# training model
 	_ = training_model(
-		model = SegResNet(init_filters=16, in_channels=4, out_channels=3, dropout_prob=0.2),
+		model = model,
 		data = [train_data, eval_data],
 		transforms = [train_transform, eval_transform, post_trans],
-		epochs = 100,
+		epochs = 10,
 		device = get_device(),
-		paths = [saved_path, reports_path, logs_path]
+		paths = [saved_path, reports_path, logs_path],
+		num_workers=0,
+		verbose=True
 	)
 
 	# making predictions
 	_ = predict_model(
-		model = SegResNet(init_filters=16, in_channels=4, out_channels=3, dropout_prob=0.2),
+		model = model,
 		data = test_data,
 		transforms = [test_transform, post_test_transforms],
 		device = get_device(),
-		paths = [saved_path, reports_path, preds_path, logs_path]
+		paths = [saved_path, reports_path, preds_path, logs_path],
+		num_workers=0,
+		verbose=True
 	)
 
 	sys.exit(0)

@@ -264,18 +264,22 @@ def plot_prediction(model_name, folder):
 	channels = _config.get('CHANNELS')
 	images = [i for i in os.listdir(folder) if '.nii' in i]
 	ids = list(set([int(i.split('_')[2]) for i in images]))
-	n = random.sample(ids, 1)[0]
-	kind = ['image', 'label', 'pred']
-	for i, k in enumerate(kind):
-		brain_vol = nib.load(os.path.join(folder, model_name + '_sample_' + str(n) + '_' + k + '.nii'))
-		brain_vol3d = nib.Nifti1Image(brain_vol.get_fdata()[0], affine=np.eye(4))
-		isocenter = list(map(int, plotting.find_xyz_cut_coords(brain_vol3d)))
-		brain_vol_data = brain_vol.get_fdata()
-		plt.figure('image', (18, 6))
-		for j in range(4 if i == 0 else 3):
-			plt.subplot(1, 4 if i == 0 else 3, j + 1)
-			plt.title(k + '_' + str(n) + ' - ' + (channels[j] if i == 0 else classes[j]))
-			plt.axis('off')
-			plt.imshow(brain_vol_data[j, :, :, isocenter[2]], cmap = 'gray' if i == 0 else 'viridis')
-		plt.show()
-
+	if len(ids) > 1:
+		n = random.sample(ids, 1)[0]
+		kind = ['image', 'label', 'pred']
+		for i, k in enumerate(kind):
+			brain_vol = nib.load(os.path.join(folder, model_name + '_sample_' + str(n) + '_' + k + '.nii'))
+			brain_vol3d = nib.Nifti1Image(brain_vol.get_fdata()[0], affine=np.eye(4))
+			isocenter = list(map(int, plotting.find_xyz_cut_coords(brain_vol3d)))
+			brain_vol_data = brain_vol.get_fdata()
+			plt.figure('image', (18, 6))
+			for j in range(4 if i == 0 else 3):
+				plt.subplot(1, 4 if i == 0 else 3, j + 1)
+				plt.title(k + '_' + str(n) + ' - ' + (channels[j] if i == 0 else classes[j]))
+				plt.axis('off')
+				plt.imshow(brain_vol_data[j, :, :, isocenter[2]], cmap = 'gray' if i == 0 else 'viridis')
+			plt.show()
+	else:
+		print('\n' + ''.join(['> ' for i in range(30)]))
+		print('\nERROR: sample predictions for\033[95m '+model_name+'\033[0m not found.\n')
+		print(''.join(['> ' for i in range(30)]) + '\n')
