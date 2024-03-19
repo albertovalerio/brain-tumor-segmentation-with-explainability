@@ -187,16 +187,15 @@ def get_slice(spatial_image, axis, offset):
 	"""
 	if type(spatial_image) is nib.nifti1.Nifti1Image:
 		spatial_image = spatial_image.get_fdata()
-	slice = np.array([])
-	match int(axis):
-		case 0:
-			slice = np.rot90(spatial_image[offset,:,:], 1)
-		case 1:
-			slice = np.rot90(spatial_image[:,offset,:], 1)
-		case 2:
-			slice = np.rot90(spatial_image[:,:,offset], 3)
-		case _:
-			raise Exception('Axis not valid. Possible values are: 0, 1, 2')
+	slice, axis = np.array([]), int(axis)
+	if axis == 0:
+		slice = np.rot90(spatial_image[offset,:,:], 1)
+	elif axis == 1:
+		slice = np.rot90(spatial_image[:,offset,:], 1)
+	elif axis == 0:
+		slice = np.rot90(spatial_image[:,:,offset], 3)
+	else:
+		raise Exception('Axis not valid. Possible values are: 0, 1, 2')
 	return slice
 
 
