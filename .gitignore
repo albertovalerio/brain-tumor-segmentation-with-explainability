@@ -164,3 +164,4 @@ cython_debug/
 .Thumbs
 data/*
 !data/.gitignore
+go_online.sh
