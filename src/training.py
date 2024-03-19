@@ -79,7 +79,7 @@ def training_model(
 		paths,
 		val_interval=1,
 		num_workers=4,
-		ministep=12,
+		ministep=20,
 		write_to_file=True,
 		verbose=False
 	):
