@@ -146,8 +146,7 @@ if __name__ == "__main__":
 		transforms = [train_transform, eval_transform, post_trans],
 		epochs = 100,
 		device = get_device(),
-		paths = [saved_path, reports_path, logs_path],
-		verbose=True
+		paths = [saved_path, reports_path, logs_path]
 	)
 
 	# making predictions
@@ -156,8 +155,7 @@ if __name__ == "__main__":
 		data = test_data,
 		transforms = [test_transform, post_test_transforms],
 		device = get_device(),
-		paths = [saved_path, reports_path, preds_path, logs_path],
-		verbose=True
+		paths = [saved_path, reports_path, preds_path, logs_path]
 	)
 
 	sys.exit(0)
