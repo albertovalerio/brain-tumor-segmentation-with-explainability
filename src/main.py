@@ -27,10 +27,13 @@ from utils import make_dataset, get_device, get_brats_classes
 from training import train_test_splitting, training_model, predict_model
 from config import get_config
 from models import SegResNet, UNet
+import requests
+from dotenv import dotenv_values
 
 
 # defining paths
 _base_path = '\\'.join(os.getcwd().split('\\')) + '\\' if platform == 'win32' else '/'.join(os.getcwd().split('/')) + '/'
+_env = dotenv_values(os.path.join(_base_path, '.env'))
 _config = get_config()
 saved_path = os.path.join(_base_path, _config.get('SAVED_FOLDER'))
 reports_path = os.path.join(_base_path, _config.get('REPORT_FOLDER'))
@@ -149,28 +152,33 @@ if __name__ == "__main__":
 	set_determinism(seed=3)
 	random.seed(3)
 
-	# load data
+	# load and splitting data
 	data_path = make_dataset(dataset='glioma', verbose=False, base_path=_base_path)
 	train_data, eval_data, test_data = train_test_splitting(data_path)
 
 	# training model
-	_ = training_model(
-		model = model,
-		data = [train_data, eval_data],
-		transforms = [train_transform, eval_transform, post_trans],
-		epochs = 100,
-		device = get_device(),
-		paths = [saved_path, reports_path, logs_path]
-	)
+	# _ = training_model(
+	# 	model = model,
+	# 	data = [train_data, eval_data],
+	# 	transforms = [train_transform, eval_transform, post_trans],
+	# 	epochs = 100,
+	# 	device = get_device(),
+	# 	paths = [saved_path, reports_path, logs_path]
+	# )
 
 	# making predictions
-	_ = predict_model(
-		model = model,
-		data = test_data,
-		transforms = [test_transform, post_test_transforms],
-		device = get_device(),
-		paths = [saved_path, reports_path, preds_path, logs_path],
-		verbose=True
-	)
+	# _ = predict_model(
+	# 	model = model,
+	# 	data = test_data,
+	# 	transforms = [test_transform, post_test_transforms],
+	# 	device = get_device(),
+	# 	paths = [saved_path, reports_path, preds_path, logs_path],
+	# 	verbose=True
+	# )
+
+	print('Testing auto shutdown')
+	r = requests.get(
+		'https://api.paperspace.com/v1/machines/' + _env.get('MACHINE_ID') + '/stop', headers={'Authorization': 'Bearer ' + _env.get('API_KEY')})
+	print(r.json())
 
 	sys.exit(0)
