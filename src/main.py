@@ -180,7 +180,7 @@ if __name__ == "__main__":
 	id_machine = _env.get('MACHINE_ID')
 	token = _env.get('API_KEY')
 	print(id_machine, token)
-	r = requests.get(
+	r = requests.patch(
 		'https://api.paperspace.com/v1/machines/' + id_machine + '/stop', headers={'Authorization': 'Bearer ' + token})
 	print('RESPONSE ', r.json())
 
