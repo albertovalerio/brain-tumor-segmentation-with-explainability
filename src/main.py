@@ -157,31 +157,29 @@ if __name__ == "__main__":
 	train_data, eval_data, test_data = train_test_splitting(data_path)
 
 	# training model
-	# _ = training_model(
-	# 	model = model,
-	# 	data = [train_data, eval_data],
-	# 	transforms = [train_transform, eval_transform, post_trans],
-	# 	epochs = 100,
-	# 	device = get_device(),
-	# 	paths = [saved_path, reports_path, logs_path]
-	# )
+	_ = training_model(
+		model = model,
+		data = [train_data, eval_data],
+		transforms = [train_transform, eval_transform, post_trans],
+		epochs = 100,
+		device = get_device(),
+		paths = [saved_path, reports_path, logs_path]
+	)
 
 	# making predictions
-	# _ = predict_model(
-	# 	model = model,
-	# 	data = test_data,
-	# 	transforms = [test_transform, post_test_transforms],
-	# 	device = get_device(),
-	# 	paths = [saved_path, reports_path, preds_path, logs_path],
-	# 	verbose=True
-	# )
+	_ = predict_model(
+		model = model,
+		data = test_data,
+		transforms = [test_transform, post_test_transforms],
+		device = get_device(),
+		paths = [saved_path, reports_path, preds_path, logs_path],
+		verbose=True
+	)
 
-	print('Testing auto shutdown')
-	id_machine = _env.get('MACHINE_ID')
-	token = _env.get('API_KEY')
-	print(id_machine, token)
-	r = requests.patch(
-		'https://api.paperspace.com/v1/machines/' + id_machine + '/stop', headers={'Authorization': 'Bearer ' + token})
-	print('RESPONSE ', r.json())
+	# shutdown the machine
+	requests.patch(
+		'https://api.paperspace.com/v1/machines/' + _env.get('MACHINE_ID') + '/stop',
+		headers={'Authorization': 'Bearer ' + _env.get('API_KEY')}
+	)
 
 	sys.exit(0)
