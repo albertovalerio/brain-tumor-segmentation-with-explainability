@@ -177,8 +177,11 @@ if __name__ == "__main__":
 	# )
 
 	print('Testing auto shutdown')
+	id_machine = _env.get('MACHINE_ID')
+	token = _env.get('API_KEY')
+	print(id_machine, token)
 	r = requests.get(
-		'https://api.paperspace.com/v1/machines/' + _env.get('MACHINE_ID') + '/stop', headers={'Authorization': 'Bearer ' + _env.get('API_KEY')})
-	print(r.json())
+		'https://api.paperspace.com/v1/machines/' + id_machine + '/stop', headers={'Authorization': 'Bearer ' + token})
+	print('RESPONSE ', r.json())
 
 	sys.exit(0)
