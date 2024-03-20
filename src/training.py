@@ -78,6 +78,7 @@ def training_model(
 		device,
 		paths,
 		val_interval=1,
+		early_stopping=10,
 		num_workers=4,
 		ministep=12,
 		write_to_file=True,
@@ -93,6 +94,7 @@ def training_model(
 		device (str): device's name.
 		paths (list): folders where to save results and model's dump.
 		val_interval (int): validation interval.
+		early_stopping (int): nr. of epochs for those there's no more improvements.
 		num_workers (int): setting multi-process data loading.
 		ministep (int): number of interval of data to load on RAM.
 		write_to_file (bool): whether to write results to csv file.
@@ -243,6 +245,12 @@ def training_model(
 					'datetime': get_date_time()
 				}
 			)
+
+		# early stopping
+		if epoch + 1 - best_metric_epoch == early_stopping:
+			print(f"\nEarly stopping triggered at epoch: {str(epoch + 1)}\n")
+			break
+
 	print(f"\n\nTrain completed! Best_metric: {best_metric:.4f} at epoch: {best_metric_epoch}, total time: {str(datetime.timedelta(seconds=int(time.time() - total_start)))}.")
 	log.write('['+get_date_time()+'] Training phase ended.EXECUTING: ' + model.name + '\n')
 	log.flush()

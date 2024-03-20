@@ -260,7 +260,7 @@ class UNet(nn.Module):
         dropout: float = 0.0,
         bias: bool = True,
         adn_ordering: str = "NDA",
-        name: str = 'SegResNet'
+        name: str = 'UNet'
     ) -> None:
         super().__init__()
 

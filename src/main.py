@@ -158,10 +158,9 @@ if __name__ == "__main__":
 		model = model,
 		data = [train_data, eval_data],
 		transforms = [train_transform, eval_transform, post_trans],
-		epochs = 10,
+		epochs = 100,
 		device = get_device(),
-		paths = [saved_path, reports_path, logs_path],
-		verbose=True
+		paths = [saved_path, reports_path, logs_path]
 	)
 
 	# making predictions
