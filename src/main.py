@@ -50,8 +50,7 @@ _models = {
         in_channels=4,
         out_channels=3,
         channels=(16, 32, 64, 128, 256),
-        strides=(2, 2, 2, 2),
-        num_res_units=2,
+        strides=(2, 2, 2, 2)
     )
 }
 
@@ -162,7 +161,6 @@ if __name__ == "__main__":
 		epochs = 10,
 		device = get_device(),
 		paths = [saved_path, reports_path, logs_path],
-		num_workers=0,
 		verbose=True
 	)
 
@@ -173,7 +171,6 @@ if __name__ == "__main__":
 		transforms = [test_transform, post_test_transforms],
 		device = get_device(),
 		paths = [saved_path, reports_path, preds_path, logs_path],
-		num_workers=0,
 		verbose=True
 	)
 

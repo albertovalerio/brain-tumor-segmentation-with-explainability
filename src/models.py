@@ -20,7 +20,6 @@ from monai.networks.layers.factories import Dropout, Act, Norm
 from monai.networks.layers.utils import get_act_layer, get_norm_layer
 from monai.networks.blocks.convolutions import Convolution, ResidualUnit
 from monai.networks.layers.simplelayers import SkipConnection
-from monai.utils import alias, export
 from monai.utils import UpsampleMode
 from typing import Optional, Union
 
@@ -174,8 +173,7 @@ class SegResNet(nn.Module):
         return x
 
 
-@export("monai.networks.nets")
-@alias("Unet")
+
 class UNet(nn.Module):
     """
     Enhanced version of UNet which has residual units implemented with the ResidualUnit class.
@@ -246,7 +244,6 @@ class UNet(nn.Module):
         input when downsampling, or twice when upsampling. In this case with N numbers of layers in the network,
         the inputs must have spatial dimensions that are all multiples of 2^N.
         Usually, applying `resize`, `pad` or `crop` transforms can help adjust the spatial size of input data.
-
     """
     def __init__(
         self,
@@ -257,7 +254,7 @@ class UNet(nn.Module):
         strides: Sequence[int],
         kernel_size: Sequence[int] | int = 3,
         up_kernel_size: Sequence[int] | int = 3,
-        num_res_units: int = 0,
+        num_res_units: int = 2,
         act: tuple | str = Act.PRELU,
         norm: tuple | str = Norm.INSTANCE,
         dropout: float = 0.0,
