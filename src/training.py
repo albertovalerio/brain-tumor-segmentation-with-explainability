@@ -368,7 +368,7 @@ def predict_model(
 				for i, s in enumerate(samples):
 					for k in s.keys():
 						nii_image = nib.Nifti1Image(s[k].detach().cpu().numpy(), affine=np.eye(4))
-						filename = model.name + '_sample_' + str(i + 1) + '_' + k + '.nii'
+						filename = model.name + '_sample_' + str(i + 1) + '_' + k + '.nii.gz'
 						nib.save(nii_image, os.path.join(preds_path, filename))
 
 			log.write('['+get_date_time()+'] Predictions ended.EXECUTING: ' + model.name + '\n')

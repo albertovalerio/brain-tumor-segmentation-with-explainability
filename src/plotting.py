@@ -283,3 +283,30 @@ def plot_prediction(model_name, folder):
 		print('\n' + ''.join(['> ' for i in range(30)]))
 		print('\nERROR: sample predictions for\033[95m '+model_name+'\033[0m not found.\n')
 		print(''.join(['> ' for i in range(30)]) + '\n')
+
+
+def plot_results(folder):
+	"""
+	Plot all metrics calculated over the testing set.
+	Args:
+		folder (str): the path of the folder containing the csv reports.
+	Returns:
+		None.
+	"""
+	try:
+		p = os.path.join(folder, 'results.csv')
+		df = pd.read_csv(p)
+		for metric in ['dice', 'hausdorff']:
+			print(''.join(['> ' for i in range(40)]))
+			print(f'\n{"":<20}{metric.upper()+"_ET":<15}{metric.upper()+"_TC":<15}{metric.upper()+"_WT":<15}{metric.upper()+"_AVG":<15}\n')
+			print(''.join(['> ' for i in range(40)]))
+			for model in df['model']:
+				et = df[df["model"] == model][metric+"_score_et"].values[0]
+				tc = df[df["model"] == model][metric+"_score_tc"].values[0]
+				wt = df[df["model"] == model][metric+"_score_wt"].values[0]
+				print(f'\n{model:<20}{et:<15.4f}{tc:<15.4f}{wt:<15.4f}{np.mean([et, tc, wt]):<15.4f}\n')
+		print(''.join(['> ' for i in range(40)]))
+	except OSError as e:
+		print('\n' + ''.join(['> ' for i in range(30)]))
+		print('\nERROR: file\033[95m  reports.csv\033[0m not found.\n')
+		print(''.join(['> ' for i in range(30)]) + '\n')
