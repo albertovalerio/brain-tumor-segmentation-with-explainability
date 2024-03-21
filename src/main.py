@@ -107,6 +107,7 @@ eval_transform = Compose(
             pixdim=(1.0, 1.0, 1.0),
             mode=('bilinear', 'nearest'),
         ),
+        RandSpatialCropd(keys=['image', 'label'], roi_size=[128, 128, 128], random_size=False),
         NormalizeIntensityd(keys='image', nonzero=True, channel_wise=True),
     ]
 )
