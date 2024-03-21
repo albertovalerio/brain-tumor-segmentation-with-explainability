@@ -9,7 +9,7 @@ import numpy as np
 import torch
 import nibabel as nib
 from monai.data.meta_tensor import MetaTensor
-from config import get_config
+from helpers.config import get_config
 if not ('google.colab' in sys.modules):
 	from dotenv import dotenv_values
 	import synapseclient

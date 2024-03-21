@@ -11,7 +11,7 @@ from monai.losses import DiceLoss
 from monai.metrics import DiceMetric, HausdorffDistanceMetric
 from monai.inferers import sliding_window_inference
 from monai.handlers.utils import from_engine
-from utils import get_date_time
+from helpers.utils import get_date_time
 
 
 def train_test_splitting(folder, train_ratio=.8, verbose=True):

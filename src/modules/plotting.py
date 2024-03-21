@@ -7,8 +7,8 @@ import pandas as pd
 import numpy as np
 from nilearn import plotting
 import nibabel as nib
-from utils import get_colored_mask, get_slice, get_brats_classes
-from config import get_config
+from helpers.utils import get_colored_mask, get_slice, get_brats_classes
+from helpers.config import get_config
 
 
 def plot_random_samples(folder, n_samples, axis):
