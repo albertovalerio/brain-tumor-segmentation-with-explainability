@@ -26,7 +26,7 @@ from monai.utils import set_determinism
 from utils import make_dataset, get_device, get_brats_classes
 from training import train_test_splitting, training_model, predict_model
 from config import get_config
-from models import SegResNet, UNet
+from models import SegResNet, UNet, SwinUNETR
 import requests
 from dotenv import dotenv_values
 
@@ -54,6 +54,12 @@ _models = {
         out_channels=3,
         channels=(16, 32, 64, 128, 256),
         strides=(2, 2, 2, 2)
+    ),
+	'SwinUNETR': SwinUNETR(
+        img_size=(128, 128, 128),
+        in_channels=4,
+        out_channels=3,
+        feature_size=48
     )
 }
 
@@ -80,7 +86,7 @@ train_transform = Compose(
             pixdim=(1.0, 1.0, 1.0),
             mode=('bilinear', 'nearest'),
         ),
-        RandSpatialCropd(keys=['image', 'label'], roi_size=[224, 224, 144], random_size=False),
+        RandSpatialCropd(keys=['image', 'label'], roi_size=[128, 128, 128], random_size=False),
         RandFlipd(keys=['image', 'label'], prob=0.5, spatial_axis=0),
         RandFlipd(keys=['image', 'label'], prob=0.5, spatial_axis=1),
         RandFlipd(keys=['image', 'label'], prob=0.5, spatial_axis=2),
@@ -161,9 +167,10 @@ if __name__ == "__main__":
 		model = model,
 		data = [train_data, eval_data],
 		transforms = [train_transform, eval_transform, post_trans],
-		epochs = 100,
+		epochs = 10,
 		device = get_device(),
-		paths = [saved_path, reports_path, logs_path]
+		paths = [saved_path, reports_path, logs_path],
+		verbose=True
 	)
 
 	# making predictions
