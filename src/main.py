@@ -152,7 +152,7 @@ post_trans = Compose(
 if __name__ == "__main__":
 
     # set model
-	model = _models['SegResNet']
+	model = _models['SwinUNETR']
 
 	# ensure reproducibility
 	set_determinism(seed=3)
