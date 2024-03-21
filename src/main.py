@@ -163,16 +163,16 @@ if __name__ == "__main__":
 	train_data, eval_data, test_data = train_test_splitting(data_path)
 
 	# training model
-	_ = training_model(
-		model = model,
-		data = [train_data, eval_data],
-		transforms = [train_transform, eval_transform, post_trans],
-		epochs = 10,
-		device = get_device(),
-		paths = [saved_path, reports_path, logs_path],
-		ministep=8,
-		verbose=True
-	)
+	# _ = training_model(
+	# 	model = model,
+	# 	data = [train_data, eval_data],
+	# 	transforms = [train_transform, eval_transform, post_trans],
+	# 	epochs = 10,
+	# 	device = get_device(),
+	# 	paths = [saved_path, reports_path, logs_path],
+	# 	ministep=8,
+	# 	verbose=True
+	# )
 
 	# making predictions
 	_ = predict_model(

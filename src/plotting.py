@@ -262,13 +262,13 @@ def plot_prediction(model_name, folder):
 	_config = get_config()
 	classes = _config.get('CLASSES')
 	channels = _config.get('CHANNELS')
-	images = [i for i in os.listdir(folder) if '.nii' in i]
+	images = [i for i in os.listdir(folder) if '.nii.gz' in i]
 	ids = list(set([int(i.split('_')[2]) for i in images]))
 	if len(ids) > 1:
 		n = random.sample(ids, 1)[0]
 		kind = ['image', 'label', 'pred']
 		for i, k in enumerate(kind):
-			brain_vol = nib.load(os.path.join(folder, model_name + '_sample_' + str(n) + '_' + k + '.nii'))
+			brain_vol = nib.load(os.path.join(folder, model_name + '_sample_' + str(n) + '_' + k + '.nii.gz'))
 			brain_vol3d = nib.Nifti1Image(brain_vol.get_fdata()[0], affine=np.eye(4))
 			isocenter = list(map(int, plotting.find_xyz_cut_coords(brain_vol3d)))
 			brain_vol_data = brain_vol.get_fdata()
@@ -304,7 +304,7 @@ def plot_results(folder):
 				et = df[df["model"] == model][metric+"_score_et"].values[0]
 				tc = df[df["model"] == model][metric+"_score_tc"].values[0]
 				wt = df[df["model"] == model][metric+"_score_wt"].values[0]
-				print(f'\n{model:<20}{et:<15.4f}{tc:<15.4f}{wt:<15.4f}{np.mean([et, tc, wt]):<15.4f}\n')
+				print(f'{model:<20}{et:<15.4f}{tc:<15.4f}{wt:<15.4f}{np.mean([et, tc, wt]):<15.4f}')
 		print(''.join(['> ' for i in range(40)]))
 	except OSError as e:
 		print('\n' + ''.join(['> ' for i in range(30)]))
