@@ -187,6 +187,7 @@ def training_model(
 					for val_data in eval_loader:
 						step_eval += 1
 						val_inputs, val_labels = (val_data['image'].to(device), val_data['label'].to(device))
+						print('sono qui', val_inputs.shape)
 						val_outputs = inference(val_inputs, device, model)
 						val_loss = loss_function(val_outputs, val_labels)
 						epoch_loss_eval += val_loss.item()
@@ -389,7 +390,7 @@ def inference(input, device, model, opts={}):
 	def _compute(input):
 		return sliding_window_inference(
 			inputs=input,
-			roi_size=opts['roi_size'] if 'roi_size' in opts else (240, 240, 160),
+			roi_size=opts['roi_size'] if 'roi_size' in opts else (128, 128, 128),
 			sw_batch_size=opts['sw_batch_size'] if 'sw_batch_size' in opts else 1,
 			predictor=model,
 			overlap=opts['overlap'] if 'overlap' in opts else .5,
