@@ -187,7 +187,7 @@ def training_model(
 					for val_data in eval_loader:
 						step_eval += 1
 						val_inputs, val_labels = (val_data['image'].to(device), val_data['label'].to(device))
-						val_outputs = inference(val_inputs, device, model, opts={'roi_size': val_inputs[0][0].shape})
+						val_outputs = inference(val_inputs, device, model)
 						val_loss = loss_function(val_outputs, val_labels)
 						epoch_loss_eval += val_loss.item()
 						val_outputs = [post_trans(i) for i in decollate_batch(val_outputs)]
@@ -381,7 +381,7 @@ def predict_model(
 		print(''.join(['> ' for i in range(30)]) + '\n')
 
 
-def inference(input, device, model, opts={}):
+def inference(input, device, model):
 	"""
 	Define inference method.
 	"""
@@ -389,10 +389,10 @@ def inference(input, device, model, opts={}):
 	def _compute(input):
 		return sliding_window_inference(
 			inputs=input,
-			roi_size=opts['roi_size'] if 'roi_size' in opts else (240, 240, 160),
-			sw_batch_size=opts['sw_batch_size'] if 'sw_batch_size' in opts else 1,
+			roi_size=(128, 128, 128) if model.name == 'SwinUNETR' else (240, 240, 160),
+			sw_batch_size=1,
 			predictor=model,
-			overlap=opts['overlap'] if 'overlap' in opts else .5,
+			overlap=.5,
 		)
 	if device.type == 'cuda':
 		with torch.cuda.amp.autocast():
