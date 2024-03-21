@@ -163,21 +163,20 @@ if __name__ == "__main__":
 	train_data, eval_data, test_data = train_test_splitting(data_path)
 
 	# training model
-	# _ = training_model(
-	# 	model = model,
-	# 	data = [train_data, eval_data],
-	# 	transforms = [train_transform, eval_transform, post_trans],
-	# 	epochs = 10,
-	# 	device = get_device(),
-	# 	paths = [saved_path, reports_path, logs_path],
-	# 	ministep=8,
-	# 	verbose=True
-	# )
+	_ = training_model(
+		model = model,
+		data = [train_data, eval_data],
+		transforms = [train_transform, eval_transform, post_trans],
+		epochs = 100,
+		device = get_device(),
+		paths = [saved_path, reports_path, logs_path],
+		ministep=8
+	)
 
 	# making predictions
 	_ = predict_model(
 		model = model,
-		data = test_data[:40],
+		data = test_data,
 		transforms = [test_transform, post_test_transforms],
 		device = get_device(),
 		paths = [saved_path, reports_path, preds_path, logs_path],
@@ -186,9 +185,9 @@ if __name__ == "__main__":
 	)
 
 	# shutdown the machine
-	# requests.patch(
-	# 	'https://api.paperspace.com/v1/machines/' + _env.get('MACHINE_ID') + '/stop',
-	# 	headers={'Authorization': 'Bearer ' + _env.get('API_KEY')}
-	# )
+	requests.patch(
+		'https://api.paperspace.com/v1/machines/' + _env.get('MACHINE_ID') + '/stop',
+		headers={'Authorization': 'Bearer ' + _env.get('API_KEY')}
+	)
 
 	sys.exit(0)
