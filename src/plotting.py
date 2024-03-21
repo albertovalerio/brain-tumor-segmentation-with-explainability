@@ -262,7 +262,7 @@ def plot_prediction(model_name, folder):
 	_config = get_config()
 	classes = _config.get('CLASSES')
 	channels = _config.get('CHANNELS')
-	images = [i for i in os.listdir(folder) if '.nii.gz' in i]
+	images = [i for i in os.listdir(folder) if '.nii' in i]
 	ids = list(set([int(i.split('_')[2]) for i in images]))
 	if len(ids) > 1:
 		n = random.sample(ids, 1)[0]

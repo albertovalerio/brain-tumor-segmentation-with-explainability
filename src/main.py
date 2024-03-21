@@ -152,7 +152,7 @@ post_trans = Compose(
 if __name__ == "__main__":
 
     # set model
-	model = _models['SwinUNETR']
+	model = _models['SegResNet']
 
 	# ensure reproducibility
 	set_determinism(seed=3)
@@ -177,7 +177,7 @@ if __name__ == "__main__":
 	# making predictions
 	_ = predict_model(
 		model = model,
-		data = test_data[:100],
+		data = test_data,
 		transforms = [test_transform, post_test_transforms],
 		device = get_device(),
 		paths = [saved_path, reports_path, preds_path, logs_path],
