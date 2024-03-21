@@ -170,6 +170,7 @@ if __name__ == "__main__":
 		epochs = 10,
 		device = get_device(),
 		paths = [saved_path, reports_path, logs_path],
+		ministep=8,
 		verbose=True
 	)
 
@@ -180,6 +181,7 @@ if __name__ == "__main__":
 		transforms = [test_transform, post_test_transforms],
 		device = get_device(),
 		paths = [saved_path, reports_path, preds_path, logs_path],
+		ministep=8,
 		verbose=True
 	)
 
