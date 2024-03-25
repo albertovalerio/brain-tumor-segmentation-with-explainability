@@ -1,22 +1,22 @@
 """
 Main executable pipeline.
 """
-import os, sys, random
+import os, sys, random, requests
 from sys import platform
-import requests
+_base_path = '\\'.join(os.getcwd().split('\\')) + '\\' if platform == 'win32' else '/'.join(os.getcwd().split('/')) + '/'
+sys.path.append(_base_path)
 from dotenv import dotenv_values
 from monai.utils import set_determinism
-from helpers.utils import make_dataset, get_device
-from modules.training import train_test_splitting, training_model, predict_model
-from helpers.config import get_config
-from modules.preprocessing import get_transformations
-from models.segresnet import SegResNet
-from models.unet import UNet
-from models.swinunetr import SwinUNETR
+from src.helpers.utils import make_dataset, get_device
+from src.modules.training import train_test_splitting, training_model, predict_model
+from src.helpers.config import get_config
+from src.modules.preprocessing import get_transformations
+from src.models.segresnet import SegResNet
+from src.models.unet import UNet
+from src.models.swinunetr import SwinUNETR
 
 
 # defining paths
-_base_path = '\\'.join(os.getcwd().split('\\')) + '\\' if platform == 'win32' else '/'.join(os.getcwd().split('/')) + '/'
 _env = dotenv_values(os.path.join(_base_path, '.env'))
 _config = get_config()
 saved_path = os.path.join(_base_path, _config.get('SAVED_FOLDER'))

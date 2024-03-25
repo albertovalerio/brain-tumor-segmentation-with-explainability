@@ -9,7 +9,7 @@ import numpy as np
 import torch
 import nibabel as nib
 from monai.data.meta_tensor import MetaTensor
-from helpers.config import get_config
+from src.helpers.config import get_config
 if not ('google.colab' in sys.modules):
 	from dotenv import dotenv_values
 	import synapseclient
@@ -216,7 +216,8 @@ def get_device():
 
 
 def get_date_time():
-	"""Convert the current date in a standard datetime format.
+	"""
+	Convert the current date in a standard datetime format.
 	Args:
 		None.
 	Returns:

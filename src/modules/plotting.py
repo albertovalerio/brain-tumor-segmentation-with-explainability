@@ -7,8 +7,8 @@ import pandas as pd
 import numpy as np
 from nilearn import plotting
 import nibabel as nib
-from helpers.utils import get_colored_mask, get_slice, get_brats_classes
-from helpers.config import get_config
+from src.helpers.utils import get_colored_mask, get_slice, get_brats_classes
+from src.helpers.config import get_config
 
 
 def plot_random_samples(folder, n_samples, axis):
@@ -236,6 +236,7 @@ def plot_training_values(model_name, folder):
 		ax.plot(x, data_df['dice_score_tc'].to_numpy(), label='tumor_core')
 		ax.plot(x, data_df['dice_score_wt'].to_numpy(), label='whole_tumor')
 		ax.set_xticks([i for i in range(0, len(data_df), 5)])
+		ax.set_yticks(np.round(np.linspace(.0, 1., 10), 1))
 		plt.axvline(best_epoch, color='red')
 		plt.text(best_epoch - 3.2, data_df['dice_score_wt'].max() / 2, 'best_run', rotation=0)
 		plt.xlabel('EPOCHS', fontsize=14)
@@ -277,7 +278,11 @@ def plot_prediction(model_name, folder):
 				plt.subplot(1, 4 if i == 0 else 3, j + 1)
 				plt.title(k + '_' + str(n) + ' - ' + (channels[j] if i == 0 else classes[j]))
 				plt.axis('off')
-				plt.imshow(brain_vol_data[j, :, :, isocenter[2]], cmap = 'gray' if i == 0 else 'viridis')
+				img = brain_vol_data[j, :, :, isocenter[2]]
+				if i == 0:
+					plt.imshow(img, cmap = 'gray')
+				else:
+					plt.imshow(np.rot90(img, 2), cmap = 'viridis')
 			plt.show()
 	else:
 		print('\n' + ''.join(['> ' for i in range(30)]))
@@ -304,7 +309,10 @@ def plot_results(folder):
 				et = df[df["model"] == model][metric+"_score_et"].values[0]
 				tc = df[df["model"] == model][metric+"_score_tc"].values[0]
 				wt = df[df["model"] == model][metric+"_score_wt"].values[0]
-				print(f'{model:<20}{et:<15.4f}{tc:<15.4f}{wt:<15.4f}{np.mean([et, tc, wt]):<15.4f}')
+				if model == 'SegResNet':
+					print(f'\033[1m{model:<20}{et:<15.4f}{tc:<15.4f}{wt:<15.4f}{np.mean([et, tc, wt]):<15.4f}\033[0m')
+				else:
+					print(f'{model:<20}{et:<15.4f}{tc:<15.4f}{wt:<15.4f}{np.mean([et, tc, wt]):<15.4f}')
 		print(''.join(['> ' for i in range(40)]))
 	except OSError as e:
 		print('\n' + ''.join(['> ' for i in range(30)]))

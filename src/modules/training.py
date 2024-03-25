@@ -11,15 +11,23 @@ from monai.losses import DiceLoss
 from monai.metrics import DiceMetric, HausdorffDistanceMetric
 from monai.inferers import sliding_window_inference
 from monai.handlers.utils import from_engine
-from helpers.utils import get_date_time
+from src.helpers.utils import get_date_time
 
 
-def train_test_splitting(folder, train_ratio=.8, verbose=True):
+def train_test_splitting(
+		folder,
+		train_ratio=.8,
+		reports_path=None,
+		write_to_file=False,
+		verbose=True
+	):
 	"""
 	Splitting train/eval/test.
 	Args:
 		folder (str): the path of the folder containing data.
 		train_ratio (float): ratio of the training set, value between 0 and 1.
+		reports_path (str): folder where to save report file. Required if `write_to_file` is True.
+		write_to_file (bool): whether to write selected data to csv file.
 		verbose (bool): whether or not print information.
 	Returns:
 		train_data (list): the training data ready to feed monai.data.Dataset
@@ -35,6 +43,22 @@ def train_test_splitting(folder, train_ratio=.8, verbose=True):
 	split_eval = int(len(train_subjects) * .8)
 	eval_subjects = train_subjects[split_eval:]
 	train_subjects = train_subjects[:split_eval]
+	if write_to_file:
+		if not reports_path:
+			print('\n' + ''.join(['> ' for i in range(30)]))
+			print('\nERROR: Paremeter \033[95m `reports_path`\033[0m must be specified.\n')
+			print(''.join(['> ' for i in range(30)]) + '\n')
+			return [],[],[]
+		else:
+			for i in range(max(len(train_subjects), len(eval_subjects), len(test_subjects))):
+				_save_results(
+					os.path.join(reports_path, 'splitting_'+str(calendar.timegm(time.gmtime()))+'.csv'),
+					{
+						'train_subjects': train_subjects[i] if i < len(train_subjects) else '',
+						'eval_subjects': eval_subjects[i] if i < len(eval_subjects) else '',
+						'test_subjects': test_subjects[i] if i < len(test_subjects) else ''
+					}
+				)
 	train_sessions = [os.path.join(folder, s) for s in os.listdir(folder) if s.split('-')[2] in train_subjects]
 	eval_sessions = [os.path.join(folder, s) for s in os.listdir(folder) if s.split('-')[2] in eval_subjects]
 	test_sessions = [os.path.join(folder, s) for s in os.listdir(folder) if s.split('-')[2] in test_subjects]

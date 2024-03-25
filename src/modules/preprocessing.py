@@ -20,7 +20,7 @@ from monai.transforms import (
     EnsureTyped,
     EnsureChannelFirstd,
 )
-from helpers.utils import get_brats_classes
+from src.helpers.utils import get_brats_classes
 
 
 class ConvertToMultiChannelBasedOnBratsClassesd(MapTransform):
