@@ -11,7 +11,7 @@ from src.helpers.utils import get_colored_mask, get_slice, get_brats_classes
 from src.helpers.config import get_config
 
 
-def plot_random_samples(folder, n_samples, axis):
+def random_samples(folder, n_samples, axis):
 	"""
 	Plot a comparison between different n data examples.
 	Args:
@@ -60,7 +60,7 @@ def plot_random_samples(folder, n_samples, axis):
 		print(''.join(['> ' for i in range(40)]) + '\n')
 
 
-def plot_single_sample(folder, session=None):
+def single_sample(folder, session=None):
 	"""
 	Plot different views of a single sample data.
 	Args:
@@ -107,7 +107,7 @@ def plot_single_sample(folder, session=None):
 	return sample
 
 
-def plot_counter(folder):
+def counter(folder):
 	"""
 	Plot data counters.
 	Args:
@@ -132,7 +132,7 @@ def plot_counter(folder):
 	plt.show()
 
 
-def plot_brats_classes(folder, session=None, axis=2):
+def brats_classes(folder, session=None, axis=2):
 	"""
 	Plot data labels and data classes according to BraTS-2023.
 	Args:
@@ -168,7 +168,7 @@ def plot_brats_classes(folder, session=None, axis=2):
 	plt.show()
 
 
-def plot_input_output(example):
+def input_output(example):
 	"""
 	Plot data input after preprocessing and data output according to BraTS-2023.
 	Args:
@@ -203,55 +203,53 @@ def plot_input_output(example):
 	plt.show()
 
 
-def plot_training_values(model_name, folder):
+def training_values(folder):
 	"""
 	Plot losses and metrics over training phase.
 	Args:
-		model_name (str): the model name. `model_name` is case sensitive.
 		folder (str): the path of the folder containing the csv reports.
 	Returns:
 		None.
 	"""
-	try:
-		p = os.path.join(folder, model_name + '_training.csv')
-		df = pd.read_csv(p)
-		run_id = sorted(df['id'].unique())[0]
-		data_df = df[df['id'] == run_id]
-		best_epoch = data_df.iloc[data_df['dice_score'].idxmax()]['epoch']
-		x = [i + 1 for i in range(len(data_df))]
-		fig, ax = plt.subplots(1, 1, figsize=(18, 6))
-		ax.plot(x, data_df['train_dice_loss'].to_numpy(), label='training_loss')
-		ax.plot(x, data_df['eval_dice_loss'].to_numpy(), label='evaluation_loss')
-		ax.set_xticks([i for i in range(0, len(data_df), 5)])
-		plt.axvline(best_epoch, color='red')
-		plt.text(best_epoch - 3.2, data_df['train_dice_loss'].max() / 2, 'best_run', rotation=0)
-		plt.xlabel('EPOCHS', fontsize=14)
-		plt.ylabel('DICE LOSS', fontsize=14)
-		plt.title('TRAINING LOSSES', fontsize=18)
-		plt.legend(fontsize=14)
+	trainings = sorted([i for i in os.listdir(folder) if '_training.csv' in i])
+	labels = [l.split('_')[0] for l in trainings]
+	if len(trainings):
+		fig, axs = plt.subplots(len(trainings), 2, figsize=(18, 6 * len(trainings)))
+		for k, ax_row in enumerate(axs):
+			df = pd.read_csv(os.path.join(folder, trainings[k]))
+			run_id = sorted(df['id'].unique())[0]
+			data_df = df[df['id'] == run_id]
+			best_epoch = data_df.iloc[data_df['dice_score'].idxmax()]['epoch']
+			x = [i + 1 for i in range(len(data_df))]
+			ax_row[0].plot(x, data_df['train_dice_loss'].to_numpy(), label='training_loss')
+			ax_row[0].plot(x, data_df['eval_dice_loss'].to_numpy(), label='evaluation_loss')
+			ax_row[0].set_xticks([i for i in range(0, len(data_df), 5)])
+			ax_row[0].axvline(best_epoch, color='red')
+			ax_row[0].text(best_epoch - 3.2, data_df['train_dice_loss'].max() / 2, 'best_run', rotation=0)
+			ax_row[0].set_xlabel('EPOCHS', fontsize=14)
+			ax_row[0].set_ylabel('DICE LOSS', fontsize=14)
+			ax_row[0].set_title(labels[k], fontsize=18)
+			ax_row[0].legend(loc='upper center')
+			ax_row[1].plot(x, data_df['dice_score_et'].to_numpy(), label='enhancing_tumor')
+			ax_row[1].plot(x, data_df['dice_score_tc'].to_numpy(), label='tumor_core')
+			ax_row[1].plot(x, data_df['dice_score_wt'].to_numpy(), label='whole_tumor')
+			ax_row[1].set_xticks([i for i in range(0, len(data_df), 5)])
+			ax_row[1].set_yticks(np.round(np.linspace(.0, 1., 10), 1))
+			ax_row[1].axvline(best_epoch, color='red')
+			ax_row[1].text(best_epoch - 3.2, data_df['dice_score_wt'].max() / 2, 'best_run', rotation=0)
+			ax_row[1].set_xlabel('EPOCHS', fontsize=14)
+			ax_row[1].set_ylabel('DICE SCORE', fontsize=14)
+			ax_row[1].set_title(labels[k], fontsize=18)
+			ax_row[1].legend(loc='lower center')
 		fig.tight_layout()
 		plt.show()
-		fig, ax = plt.subplots(1, 1, figsize=(18, 6))
-		ax.plot(x, data_df['dice_score_et'].to_numpy(), label='enhancing_tumor')
-		ax.plot(x, data_df['dice_score_tc'].to_numpy(), label='tumor_core')
-		ax.plot(x, data_df['dice_score_wt'].to_numpy(), label='whole_tumor')
-		ax.set_xticks([i for i in range(0, len(data_df), 5)])
-		ax.set_yticks(np.round(np.linspace(.0, 1., 10), 1))
-		plt.axvline(best_epoch, color='red')
-		plt.text(best_epoch - 3.2, data_df['dice_score_wt'].max() / 2, 'best_run', rotation=0)
-		plt.xlabel('EPOCHS', fontsize=14)
-		plt.ylabel('DICE METRIC', fontsize=14)
-		plt.title('TRAINING METRICS', fontsize=18)
-		plt.legend(fontsize=14)
-		fig.tight_layout()
-		plt.show()
-	except OSError as e:
+	else:
 		print('\n' + ''.join(['> ' for i in range(30)]))
-		print('\nERROR: model report for\033[95m '+model_name+'\033[0m not found.\n')
+		print('\nERROR: no model report found.\n')
 		print(''.join(['> ' for i in range(30)]) + '\n')
 
 
-def plot_prediction(model_name, folder):
+def prediction(model_name, folder):
 	"""
 	Plot original image data, groundtruth label and predicted mask.
 	Args:
@@ -290,7 +288,7 @@ def plot_prediction(model_name, folder):
 		print(''.join(['> ' for i in range(30)]) + '\n')
 
 
-def plot_results(folder):
+def results(folder):
 	"""
 	Plot all metrics calculated over the testing set.
 	Args:

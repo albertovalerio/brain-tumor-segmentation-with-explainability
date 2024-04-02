@@ -1,19 +1,17 @@
 """
 A set of utility functions
 """
-import os, sys, zipfile
+import os, zipfile
 from sys import platform
-from shutil import rmtree
 from datetime import datetime
 import numpy as np
 import torch
 import nibabel as nib
 from monai.data.meta_tensor import MetaTensor
 from src.helpers.config import get_config
-if not ('google.colab' in sys.modules):
-	from dotenv import dotenv_values
-	import synapseclient
-	import synapseutils
+from dotenv import dotenv_values
+import synapseclient
+import synapseutils
 
 
 def make_dataset(dataset, verbose=True, base_path=''):
@@ -74,45 +72,6 @@ def make_dataset(dataset, verbose=True, base_path=''):
 		print('\nERROR: missing auth token! Please check your\033[95m .env\033[0m file.\n')
 		print(''.join(['> ' for i in range(40)]) + '\n')
 		return ''
-
-
-def make_dataset_on_colab(dataset, verbose=True):
-	"""
-	Import the dataset from a remote source and extract the data on Google Colab.
-	Args:
-		dataset (str): the dataset name.
-		verbose (bool): whether or not print information.
-	Returns:
-		data_path (str): the full path of the dataset folder.
-	"""
-	_config = get_config()
-	remote_data = _config.get('REMOTE_DATA')
-	base_path = '/content'
-	data_zip = os.path.join(base_path, dataset + '.zip')
-	data_path = os.path.join(base_path, dataset, 'ASNR-MICCAI-BraTS2023-GLI-Challenge-TrainingData')
-	if not os.path.isdir(data_path):
-		print('Downloading files...')
-		os.system('wget --no-check-certificate -O '+data_zip+' "'+remote_data+'"')
-		try:
-			print('Extracting files...')
-			with zipfile.ZipFile(data_zip, 'r') as zip_ref:
-				zip_ref.extractall(base_path)
-			print('Finalizing...')
-			ko = os.path.join(base_path, '__MACOSX')
-			if os.path.isdir(ko):
-				rmtree(ko)
-				os.unlink(data_zip)
-			print('Operation completed!')
-			return data_path
-		except OSError as e:
-			print(e)
-	else:
-		if verbose:
-			print('\n' + ''.join(['> ' for i in range(40)]))
-			print('\nWARNING: \033[95m '+dataset+'\033[0m directory not empty.\n')
-			print('DATA_PATH: \033[95m '+data_path+'\033[0m\n')
-			print(''.join(['> ' for i in range(40)]) + '\n')
-		return data_path
 
 
 def get_colored_mask(mask):
