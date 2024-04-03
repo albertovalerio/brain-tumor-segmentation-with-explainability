@@ -52,7 +52,7 @@ if __name__ == "__main__":
 	train_data, eval_data, test_data = train_test_splitting(data_path, reports_path=reports_path, load_from_file=True)
 
 	# get data transformations pipelines
-	train_transform, eval_transform, post_test_transform, post_transform = get_transformations(size=128)
+	train_transform, eval_transform, post_test_transform, post_transform = get_transformations(size=SIZE)
 
 	for m in _models.keys():
 
