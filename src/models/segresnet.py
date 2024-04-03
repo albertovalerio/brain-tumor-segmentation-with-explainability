@@ -48,10 +48,10 @@ class SegResNet(nn.Module):
     def __init__(
         self,
         spatial_dims: Optional[int] = 3,
-        init_filters: Optional[int] = 8,
+        init_filters: Optional[int] = 16,
         in_channels: Optional[int] = 1,
         out_channels: Optional[int] = 2,
-        dropout_prob: Union[float, None] = None,
+        dropout_prob: Union[float, None] = .2,
         act: Union[tuple, str] = ("RELU", {"inplace": True}),
         norm: Union[tuple, str] = ("GROUP", {"num_groups": 8}),
         norm_name: Optional[str] = "",

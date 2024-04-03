@@ -51,7 +51,7 @@ class SwinUNETR(nn.Module):
         out_channels: int,
         depths: Optional[Sequence[int]] = (2, 2, 2, 2),
         num_heads: Optional[Sequence[int]] = (3, 6, 12, 24),
-        feature_size: Optional[int] = 24,
+        feature_size: Optional[int] = 48,
         norm_name: Union[tuple, str] = "instance",
         drop_rate: Optional[float] = 0.0,
         attn_drop_rate: Optional[float] = 0.0,

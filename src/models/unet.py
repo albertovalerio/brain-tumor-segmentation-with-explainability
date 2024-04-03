@@ -79,11 +79,11 @@ class UNet(nn.Module):
     """
     def __init__(
         self,
-        spatial_dims: int,
         in_channels: int,
         out_channels: int,
-        channels: Sequence[int],
-        strides: Sequence[int],
+        spatial_dims: Optional[int] = 3,
+        channels: Optional[Sequence[int]] = (16, 32, 64, 128, 256),
+        strides: Optional[Sequence[int]] = (2, 2, 2, 2),
         kernel_size: Union[Sequence[int], int] = 3,
         up_kernel_size: Union[Sequence[int], int] = 3,
         num_res_units: Optional[int] = 2,

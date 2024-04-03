@@ -148,7 +148,14 @@ def training_model(
 			- dice score for the class TC;
 			- dice score for the class WT.
 	"""
+	# unfolds grouped data/init model and utils
+	device = torch.device(device)
 	model = model.to(device)
+	train_data, eval_data = data
+	train_transform, eval_transform, post_trans = transforms
+	saved_path, reports_path, logs_path = paths
+	ministep = ministep if (len(train_data) > 10 and len(eval_data) > 10 and ministep > 1) else 2
+
 	# define Dice loss, Adam optimizer, mean Dice metric, Cosine Annealing scheduler
 	loss_function = DiceLoss(smooth_nr=0, smooth_dr=1e-5, squared_pred=True, to_onehot_y=False, sigmoid=True)
 	optimizer = torch.optim.Adam(model.parameters(), 1e-4, weight_decay=1e-5)
@@ -163,13 +170,6 @@ def training_model(
 	best_metrics_epochs_and_time = [[], [], []]
 	epoch_loss_values, epoch_time_values = [[], []], []
 	metric_values, metric_values_et, metric_values_tc, metric_values_wt = [], [], [], []
-
-	# unfolds grouped data
-	train_data, eval_data = data
-	train_transform, eval_transform, post_trans = transforms
-	device = torch.device(device)
-	saved_path, reports_path, logs_path = paths
-	ministep = ministep if (len(train_data) > 10 and len(eval_data) > 10 and ministep > 1) else 2
 
 	# log the current execution
 	log = open(os.path.join(logs_path, 'training.log'), 'a', encoding='utf-8')
@@ -333,21 +333,19 @@ def predict_model(
 	Returns:
 		metrics (list): dice score and Hausdorff distance for each class.
 	"""
-	# define metrics
-	dice_metric_batch = DiceMetric(include_background=True, reduction='mean_batch')
-	hausdorff_metric_batch = HausdorffDistanceMetric(include_background=True, reduction='mean_batch', percentile=95)
-
-	# define utils
+	# unfolds grouped data/init model and utils
+	device = torch.device(device)
 	model = model.to(device)
 	samples, counter = [], 0
 	sample_ids = random.sample(range(0, len(data)), 3)
 	ministep = ministep if (len(data) > 5 and ministep > 1) else 2
 	ministeps_test = np.linspace(0, len(data), ministep).astype(int)
-
-	# unfolds grouped data
 	test_transform, post_test_transforms = transforms
-	device = torch.device(device)
 	saved_path, reports_path, preds_path, logs_path = paths
+
+	# define metrics
+	dice_metric_batch = DiceMetric(include_background=True, reduction='mean_batch')
+	hausdorff_metric_batch = HausdorffDistanceMetric(include_background=True, reduction='mean_batch', percentile=95)
 
 	# log the current execution
 	log = open(os.path.join(logs_path, 'prediction.log'), 'a', encoding='utf-8')
@@ -393,6 +391,7 @@ def predict_model(
 					metrics = {
 						'model': model.name,
 						'n_images': len(data),
+						'size_images': test_ds[0]['image'][0].shape[0],
 						'dice_score_et': metrics[0][0],
 						'dice_score_tc': metrics[0][1],
 						'dice_score_wt': metrics[0][2],
@@ -427,11 +426,11 @@ def inference(input, device, model):
 	device = torch.device(device) if type(device) is str else device
 	def _compute(input):
 		return sliding_window_inference(
-			inputs=input,
-			roi_size=(128, 128, 128) if model.name == 'SwinUNETR' else (240, 240, 160),
-			sw_batch_size=1,
-			predictor=model,
-			overlap=.5,
+			inputs = input,
+			roi_size = tuple(input[0][0].shape),
+			sw_batch_size = 1,
+			predictor = model,
+			overlap = .5,
 		)
 	if device.type == 'cuda':
 		with torch.cuda.amp.autocast():

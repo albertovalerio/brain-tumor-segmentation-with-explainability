@@ -29,34 +29,19 @@ if platform == 'win32':
 	preds_path = preds_path.replace('/', '\\')
 	logs_path = logs_path.replace('/', '\\')
 
+# defining image input size
+# for SwinUNETR must be a multiple of 2
+SIZE = 128
 
 # defining models
 _models = {
-	'SegResNet': SegResNet(
-		init_filters=16,
-		in_channels=4,
-		out_channels=3,
-		dropout_prob=0.2
-	),
-	'UNet': UNet(
-        spatial_dims=3,
-        in_channels=4,
-        out_channels=3,
-        channels=(16, 32, 64, 128, 256),
-        strides=(2, 2, 2, 2)
-    ),
-	'SwinUNETR': SwinUNETR(
-        img_size=(128, 128, 128),
-        in_channels=4,
-        out_channels=3,
-        feature_size=48
-    )
+	'SegResNet': SegResNet(in_channels = 4, out_channels = 3),
+	'UNet': UNet(in_channels = 4, out_channels = 3),
+	'SwinUNETR': SwinUNETR(img_size = (SIZE, SIZE, SIZE), in_channels = 4, out_channels = 3)
 }
 
-if __name__ == "__main__":
 
-    # set model
-	model = _models['SwinUNETR']
+if __name__ == "__main__":
 
 	# ensure reproducibility
 	set_determinism(seed=3)
@@ -64,40 +49,36 @@ if __name__ == "__main__":
 
 	# load and splitting data
 	data_path = make_dataset(dataset='glioma', verbose=False, base_path=_base_path)
-	train_data, eval_data, test_data = train_test_splitting(data_path)
+	train_data, eval_data, test_data = train_test_splitting(data_path, reports_path=reports_path, load_from_file=True)
 
 	# get data transformations pipelines
-	(
-		train_transform,
-		eval_transform,
-		test_transform,
-		post_test_transforms,
-		post_trans
-	) = get_transformations(roi_size=(128, 128, 128) if model.name == 'SwinUNETR' else (224, 224, 144))
+	train_transform, eval_transform, post_test_transform, post_transform = get_transformations(size=128)
 
-	# training model
-	_ = training_model(
-		model = model,
-		data = [train_data, eval_data],
-		transforms = [train_transform, eval_transform, post_trans],
-		epochs = 100,
-		device = get_device(),
-		paths = [saved_path, reports_path, logs_path],
-		num_workers=0,
-		ministep=8,
-		verbose=True
-	)
+	for m in _models.keys():
 
-	# making predictions
-	_ = predict_model(
-		model = model,
-		data = test_data,
-		transforms = [test_transform, post_test_transforms],
-		device = get_device(),
-		paths = [saved_path, reports_path, preds_path, logs_path],
-		ministep=8,
-		verbose=True
-	)
+		# set model
+		model = _models[m]
+
+		# training model
+		_ = training_model(
+			model = model,
+			data = [train_data, eval_data],
+			transforms = [train_transform, eval_transform, post_transform],
+			epochs = 100,
+			device = get_device(),
+			paths = [saved_path, reports_path, logs_path],
+			verbose = False
+		)
+
+		# making predictions
+		_ = predict_model(
+			model = model,
+			data = test_data,
+			transforms = [eval_transform, post_test_transform],
+			device = get_device(),
+			paths = [saved_path, reports_path, preds_path, logs_path],
+			verbose = True
+		)
 
 	# shutdown the machine
 	requests.patch(

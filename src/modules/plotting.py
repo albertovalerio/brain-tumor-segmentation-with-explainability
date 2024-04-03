@@ -180,26 +180,32 @@ def input_output(example):
 	classes = _config.get('CLASSES')
 	channels = _config.get('CHANNELS')
 	axes_l = ['X=100', 'Y=100', 'Z=60']
+	brain_vol = example['image'].detach().cpu().numpy()
+	brain_mask = example['label'].detach().cpu().numpy()
+	brain_vol3d = nib.Nifti1Image(brain_vol[0], affine=np.eye(4))
+	brain_mask3d = nib.Nifti1Image(brain_mask[0], affine=np.eye(4))
+	isocenter_vol = list(map(int, plotting.find_xyz_cut_coords(brain_vol3d)))
+	isocenter_mask = list(map(int, plotting.find_xyz_cut_coords(brain_mask3d)))
 	plt.figure('image-t1c', (18, 6))
 	for i in range(3):
 		plt.subplot(1, 3, i + 1)
 		plt.title(axes_l[i])
 		plt.axis('off')
-		plt.imshow(get_slice(example['image'][0].detach().cpu(), i, 60 if i == 2 else 100), cmap='gray')
+		plt.imshow(get_slice(brain_vol[0], i, isocenter_vol[i]), cmap='gray')
 	plt.show()
 	plt.figure('image', (18, 6))
 	for i in range(4):
 		plt.subplot(1, 4, i + 1)
 		plt.title(channels[i])
 		plt.axis('off')
-		plt.imshow(example['image'][i, :, :, 60].detach().cpu(), cmap='gray')
+		plt.imshow(get_slice(brain_vol[i], 2, isocenter_vol[2]), cmap='gray')
 	plt.show()
 	plt.figure('label', (18, 6))
 	for i in range(3):
 		plt.subplot(1, 3, i + 1)
 		plt.title(classes[i])
 		plt.axis('off')
-		plt.imshow(example['label'][i, :, :, 80].detach().cpu())
+		plt.imshow(get_slice(brain_mask[i], 2, isocenter_mask[2]))
 	plt.show()
 
 
