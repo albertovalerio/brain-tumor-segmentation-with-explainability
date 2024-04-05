@@ -113,7 +113,7 @@ def get_transformations(size):
 		Invertd(
 			keys='label',
 			transform=eval_transform,
-			orig_keys='image',
+			orig_keys='label',
 			meta_keys='label_meta_dict',
 			orig_meta_keys='image_meta_dict',
 			meta_key_postfix='meta_dict',

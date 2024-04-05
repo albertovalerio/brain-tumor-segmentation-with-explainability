@@ -31,7 +31,7 @@ if platform == 'win32':
 
 # defining image input size
 # for SwinUNETR must be a multiple of 2
-SIZE = 128
+SIZE = 256
 
 # defining models
 _models = {
