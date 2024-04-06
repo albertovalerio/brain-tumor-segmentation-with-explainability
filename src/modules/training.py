@@ -427,7 +427,7 @@ def inference(input, device, model):
 	def _compute(input):
 		return sliding_window_inference(
 			inputs = input,
-			roi_size = tuple(input[0][0].shape),
+			roi_size = (128, 128, 128) if model.name == 'SwinUNETR' else (240, 240, 160),
 			sw_batch_size = 1,
 			predictor = model,
 			overlap = .5,

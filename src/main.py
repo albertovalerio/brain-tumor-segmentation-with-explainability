@@ -29,15 +29,11 @@ if platform == 'win32':
 	preds_path = preds_path.replace('/', '\\')
 	logs_path = logs_path.replace('/', '\\')
 
-# defining image input size
-# for SwinUNETR must be a multiple of 2
-SIZE = 256
-
 # defining models
 _models = {
 	'SegResNet': SegResNet(in_channels = 4, out_channels = 3),
 	'UNet': UNet(in_channels = 4, out_channels = 3),
-	'SwinUNETR': SwinUNETR(img_size = (SIZE, SIZE, SIZE), in_channels = 4, out_channels = 3)
+	'SwinUNETR': SwinUNETR(in_channels = 4, out_channels = 3)
 }
 
 
@@ -51,13 +47,18 @@ if __name__ == "__main__":
 	data_path = make_dataset(dataset='glioma', verbose=False, base_path=_base_path)
 	train_data, eval_data, test_data = train_test_splitting(data_path, reports_path=reports_path, load_from_file=True)
 
-	# get data transformations pipelines
-	train_transform, eval_transform, post_test_transform, post_transform = get_transformations(size=SIZE)
-
 	for m in _models.keys():
 
 		# set model
 		model = _models[m]
+
+		# get data transformations pipelines
+		(
+			train_transform,
+			eval_transform,
+			post_test_transform,
+			post_transform
+		) = get_transformations(roi_size=(128, 128, 128) if model.name == 'SwinUNETR' else (224, 224, 144))
 
 		# training model
 		_ = training_model(
@@ -81,9 +82,9 @@ if __name__ == "__main__":
 		)
 
 	# shutdown the machine
-	requests.patch(
-		'https://api.paperspace.com/v1/machines/' + _env.get('MACHINE_ID') + '/stop',
-		headers={'Authorization': 'Bearer ' + _env.get('API_KEY')}
-	)
+	# requests.patch(
+	# 	'https://api.paperspace.com/v1/machines/' + _env.get('MACHINE_ID') + '/stop',
+	# 	headers={'Authorization': 'Bearer ' + _env.get('API_KEY')}
+	# )
 
 	sys.exit(0)

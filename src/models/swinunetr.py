@@ -46,9 +46,9 @@ class SwinUNETR(nn.Module):
     )
     def __init__(
         self,
-        img_size: Sequence[int] | int,
         in_channels: int,
         out_channels: int,
+        img_size: Union[Sequence[int], int] = (128, 128, 128),
         depths: Optional[Sequence[int]] = (2, 2, 2, 2),
         num_heads: Optional[Sequence[int]] = (3, 6, 12, 24),
         feature_size: Optional[int] = 48,
