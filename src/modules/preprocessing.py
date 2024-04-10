@@ -23,6 +23,9 @@ from monai.transforms import (
 from src.helpers.utils import get_brats_classes
 
 
+__all__ = ['get_transformations']
+
+
 class ConvertToMultiChannelBasedOnBratsClassesd(MapTransform):
 	"""
 	Convert labels to multi channels based on BraTS-2023 classes.

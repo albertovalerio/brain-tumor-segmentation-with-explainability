@@ -11,6 +11,9 @@ from monai.networks.layers.simplelayers import SkipConnection
 from typing import Optional, Union
 
 
+__all__ = ['UNet']
+
+
 class UNet(nn.Module):
     """
     Enhanced version of UNet which has residual units implemented with the ResidualUnit class.

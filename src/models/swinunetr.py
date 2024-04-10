@@ -18,8 +18,9 @@ from typing_extensions import Final
 from typing import Optional, Union
 
 
+__all__ = ['SwinUNETR']
+rearrange, _ = optional_import('einops', name='rearrange')
 
-rearrange, _ = optional_import("einops", name="rearrange")
 
 class SwinUNETR(nn.Module):
     """

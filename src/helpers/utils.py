@@ -14,6 +14,9 @@ import synapseclient
 import synapseutils
 
 
+__all__ = ['make_dataset', 'get_colored_mask', 'get_brats_classes', 'get_slice', 'get_device', 'get_date_time']
+
+
 def make_dataset(dataset, verbose=True, base_path=''):
 	"""
 	Import the dataset from a remote source and extract the data.

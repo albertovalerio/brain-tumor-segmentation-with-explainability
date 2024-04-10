@@ -10,6 +10,9 @@ from monai.utils import UpsampleMode
 from typing import Optional, Union
 
 
+__all__ = ['SegResNet']
+
+
 class SegResNet(nn.Module):
     """
     SegResNet based on `3D MRI brain tumor segmentation using autoencoder regularization
