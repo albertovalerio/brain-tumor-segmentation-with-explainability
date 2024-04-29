@@ -8,6 +8,7 @@ CONFIG = {
 	'PRED_FOLDER':			'predictions/',
 	'LOG_FOLDER':			'logs/',
 	'JSON_FOLDER':			'json/',
+	'PROMPT_FOLDER':		'prompts/',
 	'SYN_IDS':				{
 		'glioma':		'syn51514105',
 		'africa':		'syn51514109',
