@@ -51,7 +51,10 @@ def get_explanations(model_id, prompt, write_to_file=True, output_path='', outpu
 			print(''.join(['> ' for i in range(30)]) + '\n')
 			return ''
 		else:
-			with open(os.path.join(output_path, model_id.split('/')[-1] + '.md'), 'w') as f:
+			with open(os.path.join(output_path, model_id.split('/')[-1] + '.md'), 'a') as f:
+				f.write('\n\n# **Prompt**\n\n')
+				f.write(prompt)
+				f.write('\n\n# **Output**\n\n')
 				f.write(readable_output)
 	if verbose:
 		print(readable_output.replace('. ', '. \n'))
