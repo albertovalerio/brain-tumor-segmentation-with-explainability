@@ -1,4 +1,4 @@
-# brain-tumor-segmentation
+# brain-tumor-segmentation-with-explainability
 
 Starting from a literature review of explainable AI techniques applied to the analysis and classification of brain diseases, a dataset of medical images (MRI) relating to specific brain diseases was selected, in particular, brain tumors of the glioma type were considered.
 
