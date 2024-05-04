@@ -25,6 +25,8 @@ cp .env.example .env
 
 ├── data                          <- Dataset of MR images.
 │
+├── images                        <- Examples images, screenshot and graphs results.
+│
 ├── json                          <- JSON files containing the descriptors of XAI framework.
 │
 ├── logs                          <- Logs saved during the executions of training and testing phases.
@@ -41,7 +43,7 @@ cp .env.example .env
 │
 ├── reports                       <- Saved training and testing splitting and metrics.
 |
-├── saved                         <- Best model serializiztion files.
+├── saved                         <- Best model serialization files.
 │
 ├── src
 │   ├── helpers                   <- Configuration files and utilities functions.
@@ -60,7 +62,7 @@ cp .env.example .env
 │   │   ├── preprocessing.py
 │   │   └── training.py
 │   │
-│   └── main.py                  <- Script for the execution of the whole pipeline.
+│   └── main.py                  <- Python script for the execution of the whole pipeline.
 │
 ├── .env.example                 <- Environment variables.
 ├── .gitignore                   <- Specifications of files to be ignored by Git.
@@ -83,6 +85,23 @@ LLM prompting was carried out on the following resources:
 * CPU: 1 x Apple M2 Max (12 cores).
 * GPU: 1 x Apple M2 Max (38 cores).
 * RAM: 64 GB.
+
+
+## Results
+
+#### Example of segmentation models 4-channels input
+![amazon results](/images/model_input.png)
+#### Example of segmentation models label
+![amazon results](/images/model_output.png)
+#### Example of segmentation models prediction
+![amazon results](/images/model_prediction.png)
+#### Segmentation models metrics
+![amazon results](/images/metrics.png)
+#### Language models explainable medical reports
+- **[BioMistral-7B.md](/prompts/BioMistral-7B.md)**
+- **[Meta-Llama-3-8B-Instruct.md](/prompts/Meta-Llama-3-8B-Instruct.md)**
+- **[Mistral-7B-Instruct-v0.2.md](/prompts/Mistral-7B-Instruct-v0.2.md)**
+
 
 ## Authors
 
