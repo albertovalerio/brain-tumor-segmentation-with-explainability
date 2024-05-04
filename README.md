@@ -90,13 +90,13 @@ LLM prompting was carried out on the following resources:
 ## Results
 
 #### Example of segmentation models 4-channels input
-![amazon results](/images/model_input.png)
+![model input](/images/model_input.png)
 #### Example of segmentation models label
-![amazon results](/images/model_output.png)
+![model output](/images/model_output.png)
 #### Example of segmentation models prediction
-![amazon results](/images/model_prediction.png)
+![model prediction](/images/model_prediction.png)
 #### Segmentation models metrics
-![amazon results](/images/metrics.png)
+![results](/images/metrics.png)
 #### Language models explainable medical reports
 - **[BioMistral-7B.md](/prompts/BioMistral-7B.md)**
 - **[Meta-Llama-3-8B-Instruct.md](/prompts/Meta-Llama-3-8B-Instruct.md)**
