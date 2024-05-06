@@ -25,7 +25,7 @@ cp .env.example .env
 
 ├── data                          <- Dataset of MR images.
 │
-├── images                        <- Examples images, screenshot and graphs results.
+├── images                        <- Examples images, screenshots and graphs results.
 │
 ├── json                          <- JSON files containing the descriptors of XAI framework.
 │
@@ -35,15 +35,15 @@ cp .env.example .env
 │   ├── 1-data-exploration.ipynb  <- Explorative data analysys.
 │   ├── 2-training.ipynb          <- Execution of training phase and results.
 │   ├── 3-post-processing.ipynb   <- XAI descriptors extraction.
-│   └── 4-explainability.ipynb    <- Testing prompt + descriptors on some LLM.
+│   └── 4-explainability.ipynb    <- Testing prompts and descriptors on LLMs.
 │
-├── predictions                   <- Saved random examples with their masks during the testing phase, for each model.
+├── predictions                   <- Saved random examples during the testing phase, for each model.
 |
 ├── prompts                       <- Saved output prompts for each LLM.
 │
 ├── reports                       <- Saved training and testing splitting and metrics.
 |
-├── saved                         <- Best model serialization files.
+├── saved                         <- Best models serialization files.
 │
 ├── src
 │   ├── helpers                   <- Configuration files and utilities functions.
@@ -95,7 +95,7 @@ LLM prompting was carried out on the following resources:
 ![model output](/images/model_output.png)
 #### Example of segmentation models prediction
 ![model prediction](/images/model_prediction.png)
-#### Segmentation models metrics
+#### Segmentation models results
 ![results](/images/metrics.png)
 #### Language models explainable medical reports
 - **[BioMistral-7B.md](/prompts/BioMistral-7B.md)**
@@ -114,7 +114,7 @@ The present project has been realized by me **[@albertovalerio](https://github.c
 - Language models taken from **[@HuggingFace](https://huggingface.co/)** community.
 - Dataset from **[@BraTS-2023](https://www.synapse.org/#!Synapse:syn51156910/wiki/622351)** challenge.
 
-#### Further Acknowledgments
+#### Further acknowledgments
 
 - **[@NiBabel](https://nipy.org/nibabel/)**
 - **[@Nilearn](https://nilearn.github.io/)**
