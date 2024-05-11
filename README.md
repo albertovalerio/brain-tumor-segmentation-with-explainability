@@ -39,7 +39,9 @@ cp .env.example .env
 │
 ├── predictions                   <- Saved random examples during the testing phase, for each model.
 |
-├── prompts                       <- Saved output prompts for each LLM.
+├── prompts                       <- Saved output prompts for each LLM and for each language.
+│   ├── en
+│   └── it
 │
 ├── reports                       <- Saved training and testing splitting and metrics.
 |
