@@ -9,3 +9,4 @@ torch==2.2.1
 einops==0.7.0
 siibra==1.0a9
 transformers==4.40.1
+sentencepiece==0.2.0

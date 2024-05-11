@@ -68,18 +68,25 @@ def write_json_prompt(example, areas, paths):
 		print('\nERROR: Path \033[95m' + (preds_path if not os.path.isdir(preds_path) else json_path) + '\033[0m is not a valid path.\n')
 		print(''.join(['> ' for i in range(30)]) + '\n')
 	else:
-		json_data = {'MRI_Scan': {'Tumor_Details': {'Spatial_Distribution': []}}}
+		json_data_en = {'MRI_Scan': {'Tumor_Details': {'Spatial_Distribution': []}}}
+		json_data_it = {'MRI_Scan': {'Dettagli_Tumore': {'Distribuzione_Spaziale': []}}}
 
 		# setting brain areas details
 		for k, v in enumerate(areas.values()):
-			json_data['MRI_Scan']['Tumor_Details']['Spatial_Distribution'].append({
+			json_data_en['MRI_Scan']['Tumor_Details']['Spatial_Distribution'].append({
 				'Region': list(areas.keys())[k],
 				'Percentage_of_Tumor': v['Percentage_of_Tumor'],
 				'Percentage_of_Region_Affected': v['Percentage_of_Region_Affected']
 			})
+			json_data_it['MRI_Scan']['Dettagli_Tumore']['Distribuzione_Spaziale'].append({
+				'Regione': list(areas.keys())[k],
+				'Percentuale_del_Tumore': v['Percentage_of_Tumor'],
+				'Percentuale_della_Regione_Affetta': v['Percentage_of_Region_Affected']
+			})
 
 		# setting semantic segmentation details
-		json_data['MRI_Scan']['Tumor_Details']['Semantic_Segmentation'] = {'Tumor_Core': {'Color': 'red'}, 'Peritumoral_Edema': {'Color': 'yellow'}, 'GD_Enhancing_Tumor': {'Color': 'green'}}
+		json_data_en['MRI_Scan']['Tumor_Details']['Semantic_Segmentation'] = {'Tumor_Core': {'Color': 'red'}, 'Peritumoral_Edema': {'Color': 'yellow'}, 'GD_Enhancing_Tumor': {'Color': 'green'}}
+		json_data_it['MRI_Scan']['Dettagli_Tumore']['Segmentazione_Semantica'] = {'Nucleo_del_tumore': {'Colore': 'rosso'}, 'Edema_Peritumorale': {'Colore': 'giallo'}, 'Tumore_Circostante': {'Colore': 'verde'}}
 
 		# setting metrics
 		pred = nib.load(os.path.join(preds_path, example + '_pred.nii.gz'))
@@ -92,20 +99,30 @@ def write_json_prompt(example, areas, paths):
 		hausdorff = [i.item() for i in hausdorff_metric_batch.aggregate()]
 		dice_metric_batch.reset()
 		hausdorff_metric_batch.reset()
-		json_data['MRI_Scan']['Tumor_Details']['Segmentation_Confidence'] = {}
-		json_data['MRI_Scan']['Tumor_Details']['Segmentation_Confidence']['Dice_Score'] = {}
-		json_data['MRI_Scan']['Tumor_Details']['Segmentation_Confidence']['Hausdorff_Distance'] = {}
+		json_data_en['MRI_Scan']['Tumor_Details']['Segmentation_Confidence'] = {}
+		json_data_en['MRI_Scan']['Tumor_Details']['Segmentation_Confidence']['Dice_Score'] = {}
+		json_data_en['MRI_Scan']['Tumor_Details']['Segmentation_Confidence']['Hausdorff_Distance'] = {}
+		json_data_it['MRI_Scan']['Dettagli_Tumore']['Accuratezza_Segmentazione'] = {}
+		json_data_it['MRI_Scan']['Dettagli_Tumore']['Accuratezza_Segmentazione']['Indice_di_similarità_di_Sørensen'] = {}
+		json_data_it['MRI_Scan']['Dettagli_Tumore']['Accuratezza_Segmentazione']['Distanza_di_Hausdorff'] = {}
 		for i, m in enumerate(['Enhancing_Tumor', 'Tumor_Core', 'Whole_Tumor', 'Average']):
 			if m == 'Average':
-				json_data['MRI_Scan']['Tumor_Details']['Segmentation_Confidence']['Dice_Score'][m] = round((sum(dice) / len(dice)), 2)
-				json_data['MRI_Scan']['Tumor_Details']['Segmentation_Confidence']['Hausdorff_Distance'][m] = round((sum(hausdorff) / len(hausdorff)), 2)
+				json_data_en['MRI_Scan']['Tumor_Details']['Segmentation_Confidence']['Dice_Score'][m] = round((sum(dice) / len(dice)), 2)
+				json_data_en['MRI_Scan']['Tumor_Details']['Segmentation_Confidence']['Hausdorff_Distance'][m] = round((sum(hausdorff) / len(hausdorff)), 2)
+				json_data_it['MRI_Scan']['Dettagli_Tumore']['Accuratezza_Segmentazione']['Indice_di_similarità_di_Sørensen'][m] = round((sum(dice) / len(dice)), 2)
+				json_data_it['MRI_Scan']['Dettagli_Tumore']['Accuratezza_Segmentazione']['Distanza_di_Hausdorff'][m] = round((sum(hausdorff) / len(hausdorff)), 2)
 			else:
-				json_data['MRI_Scan']['Tumor_Details']['Segmentation_Confidence']['Dice_Score'][m] = round(dice[i], 2)
-				json_data['MRI_Scan']['Tumor_Details']['Segmentation_Confidence']['Hausdorff_Distance'][m] = round(hausdorff[i], 2)
+				json_data_en['MRI_Scan']['Tumor_Details']['Segmentation_Confidence']['Dice_Score'][m] = round(dice[i], 2)
+				json_data_en['MRI_Scan']['Tumor_Details']['Segmentation_Confidence']['Hausdorff_Distance'][m] = round(hausdorff[i], 2)
+				json_data_it['MRI_Scan']['Dettagli_Tumore']['Accuratezza_Segmentazione']['Indice_di_similarità_di_Sørensen'][m] = round(dice[i], 2)
+				json_data_it['MRI_Scan']['Dettagli_Tumore']['Accuratezza_Segmentazione']['Distanza_di_Hausdorff'][m] = round(hausdorff[i], 2)
 
 		# setting model name
-		json_data['MRI_Scan']['Tumor_Details']['Model_Used'] = example.split('_')[0]
+		json_data_en['MRI_Scan']['Tumor_Details']['Model_Used'] = example.split('_')[0]
+		json_data_it['MRI_Scan']['Dettagli_Tumore']['Modello_Utilizzato'] = example.split('_')[0]
 
 		# write data to json file
-		with open(os.path.join(json_path, example + '.json'), 'w') as js:
-			json.dump(json_data, js, indent = '\t')
+		with open(os.path.join(json_path, example + '_EN.json'), 'w') as js:
+			json.dump(json_data_en, js, indent = '\t')
+		with open(os.path.join(json_path, example + '_IT.json'), 'w') as js:
+			json.dump(json_data_it, js, indent = '\t')
