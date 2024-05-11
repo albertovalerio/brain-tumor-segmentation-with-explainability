@@ -100,9 +100,9 @@ LLM prompting was carried out on the following resources:
 #### Segmentation models results
 ![results](/images/metrics.png)
 #### Language models explainable medical reports
-- **[BioMistral-7B.md](/prompts/BioMistral-7B.md)**
-- **[Meta-Llama-3-8B-Instruct.md](/prompts/Meta-Llama-3-8B-Instruct.md)**
-- **[Mistral-7B-Instruct-v0.2.md](/prompts/Mistral-7B-Instruct-v0.2.md)**
+- **[BioMistral-7B.md](/prompts/en/BioMistral-7B.md)**
+- **[Meta-Llama-3-8B-Instruct.md](/prompts/en/Meta-Llama-3-8B-Instruct.md)**
+- **[Mistral-7B-Instruct-v0.2.md](/prompts/en/Mistral-7B-Instruct-v0.2.md)**
 
 
 ## Authors
