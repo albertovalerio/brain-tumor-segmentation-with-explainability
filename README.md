@@ -1,8 +1,20 @@
 # brain-tumor-segmentation-with-explainability
 
-Starting from a literature review of explainable AI techniques applied to the analysis and classification of brain diseases, a dataset of medical images (MRI) relating to specific brain diseases was selected, in particular, brain tumors of the glioma type were considered.
+This works presents an eXplainable Artificial Intelligence (XAI) framework for brain
+tumor detection and analysis from Magnetic Resonance Imaging (MRI) data. The proposed approach integrates advanced deep learning techniques for accurate brain tumor segmentation with XAI methodologies to generate human-interpretable explanations of the AI system’s decision-making process.
 
-On this dataset, various state-of-the-art models and methodologies were applied for the segmentation of the brain areas affected at different levels of severity by the disease and, subsequently, a framework was proposed for the explainability of the AI models, the which, starting from the definition of a series of objective descriptors extracted from the overlap of the segmentation mask with a "brain atlas", constituted the input of different linguistic models for the generation of a medical report with the aim of giving support, that it was explainable and interpretable, for experts in the sector, and subordinately for the improvement of diagnostic and therapeutic practices in the field of neuroscience and medicine.
+The primary objective of this work is to develop an innovative system capable
+of providing explainable brain tumor detection. The proposed approach is novel in
+the relevant scientific literature, as it generates textual explanations (medical reports)
+from scratch, without relying on pre-existing text associated with the medical images
+or external knowledge sources. The framework also investigates multi-lingual support for textual explanations to enhance accessibility and usability in different linguistic contexts.
+
+The methodology employed in this work can be broadly divided into four main
+stages:
+1. Semantic Segmentation
+2. Brain Atlas Mapping
+3. JSON Construction
+4. Prompt Engineering and LLMs Integration
 
 
 ## Requirements
@@ -93,16 +105,17 @@ LLM prompting was carried out on the following resources:
 
 #### Example of segmentation models 4-channels input
 ![model input](/images/model_input.png)
-#### Example of segmentation models label
+#### Example of segmentation models labels
 ![model output](/images/model_output.png)
-#### Example of segmentation models prediction
+#### Example of segmentation models predictions
 ![model prediction](/images/model_prediction.png)
 #### Segmentation models results
 ![results](/images/metrics.png)
+
 #### Language models explainable medical reports
-- **[BioMistral-7B.md](/prompts/en/BioMistral-7B.md)**
-- **[Meta-Llama-3-8B-Instruct.md](/prompts/en/Meta-Llama-3-8B-Instruct.md)**
-- **[Mistral-7B-Instruct-v0.2.md](/prompts/en/Mistral-7B-Instruct-v0.2.md)**
+1. **[Meta-Llama-3-8B-Instruct.md](/prompts/en/Meta-Llama-3-8B-Instruct.md)**
+2. **[Mistral-7B-Instruct-v0.2.md](/prompts/en/Mistral-7B-Instruct-v0.2.md)**
+3. **[BioMistral-7B.md](/prompts/en/BioMistral-7B.md)**
 
 
 ## Authors
