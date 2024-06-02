@@ -1,7 +1,7 @@
 """
 Definitions of explainability utility functions.
 """
-import os
+import os, time
 from src.helpers.utils import get_device
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -21,9 +21,11 @@ def get_explanations(model_id, prompt, write_to_file=True, output_path='', outpu
 		verbose (bool): whether or not to print the output.
 	Returns:
 		readable_output (str): the explanation output.
+		exec_time (float): the inference execution time.
 	"""
 	os.environ['TOKENIZERS_PARALLELISM'] = 'false'
 	device = get_device()
+	start = time.time()
 	tokenizer = AutoTokenizer.from_pretrained(model_id)
 	model = AutoModelForCausalLM.from_pretrained(model_id).to(device)
 	inputs = tokenizer.apply_chat_template(
@@ -44,6 +46,7 @@ def get_explanations(model_id, prompt, write_to_file=True, output_path='', outpu
 		top_p = 0.9,
 	)
 	readable_output = tokenizer.decode(outputs[0][inputs.shape[-1]:], skip_special_tokens=True)
+	end = time.time()
 	if write_to_file:
 		if output_path == '':
 			print('\n' + ''.join(['> ' for i in range(30)]))
@@ -59,4 +62,4 @@ def get_explanations(model_id, prompt, write_to_file=True, output_path='', outpu
 	if verbose:
 		print(readable_output.replace('. ', '. \n'))
 	del tokenizer, model, inputs, outputs
-	return readable_output
+	return readable_output, end - start
