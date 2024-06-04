@@ -10,3 +10,7 @@ einops==0.7.0
 siibra==1.0a9
 transformers==4.40.1
 sentencepiece==0.2.0
+spacy==3.7.4
+textstat==0.7.3
+sentence-transformers==3.0.0
+scikit-learn==1.4.1.post1

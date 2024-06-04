@@ -12,7 +12,7 @@ from monai.losses import DiceLoss
 from monai.metrics import DiceMetric, HausdorffDistanceMetric
 from monai.inferers import sliding_window_inference
 from monai.handlers.utils import from_engine
-from src.helpers.utils import get_date_time
+from src.helpers.utils import get_date_time, save_results
 
 
 __all__ = ['train_test_splitting', 'training_model', 'predict_model']
@@ -69,7 +69,7 @@ def train_test_splitting(
 			return [],[],[]
 		else:
 			for i in range(max(len(train_subjects), len(eval_subjects), len(test_subjects))):
-				_save_results(
+				save_results(
 					os.path.join(reports_path, 'splitting_'+str(calendar.timegm(time.gmtime()))+'.csv'),
 					{
 						'train_subjects': train_subjects[i] if i < len(train_subjects) else '',
@@ -271,7 +271,7 @@ def training_model(
 
 		# save results to file
 		if write_to_file:
-			_save_results(
+			save_results(
 				file = os.path.join(reports_path, model.name + '_training.csv'),
 				metrics = {
 					'id': model.name.upper() + '_' + str(ts),
@@ -389,7 +389,7 @@ def predict_model(
 
 			# save results to file
 			if write_to_file:
-				_save_results(
+				save_results(
 					file = os.path.join(reports_path, 'results.csv'),
 					metrics = {
 						'model': model.name,
@@ -440,22 +440,3 @@ def inference(input, device, model):
 			return _compute(input)
 	else:
 		return _compute(input)
-
-
-def _save_results(file, metrics):
-	"""Save the metrics to csv file.
-	Args:
-		file (str): the file path where to save data.
-		metrics (dict): the metrics of the experiment.
-	Returns:
-		None.
-	"""
-	if os.path.isfile(file):
-		with open(file, 'a', encoding='utf-8') as outfile:
-			csvwriter = csv.writer(outfile, delimiter=',')
-			csvwriter.writerow(metrics.values())
-	else:
-		with open(file, 'w', encoding='utf-8') as outfile:
-			csvwriter = csv.writer(outfile, delimiter=',')
-			csvwriter.writerow(metrics)
-			csvwriter.writerow(metrics.values())

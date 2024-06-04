@@ -322,3 +322,20 @@ def results(folder):
 		print('\n' + ''.join(['> ' for i in range(30)]))
 		print('\nERROR: file\033[95m  reports.csv\033[0m not found.\n')
 		print(''.join(['> ' for i in range(30)]) + '\n')
+
+
+def available_llms():
+	"""
+	Printing all available llms as defined in `src.helpers.config`.
+	Args:
+		None.
+	Returns:
+		None.
+	"""
+	_config = get_config()
+	llms = _config.get('LLM')
+	print(''.join(['> ' for i in range(35)]))
+	print(f'\n{"MODEL_KEY":<15}{"MODEL_NAME":<25}\n')
+	print(''.join(['> ' for i in range(35)]))
+	for k in llms.keys():
+		print(f'\033[1m{k:<15}\033[0m{llms[k].split("/")[-1]:<25}')

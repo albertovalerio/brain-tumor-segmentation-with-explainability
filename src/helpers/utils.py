@@ -1,7 +1,7 @@
 """
 A set of utility functions
 """
-import os, zipfile
+import os, zipfile, csv
 from sys import platform
 from datetime import datetime
 import numpy as np
@@ -25,7 +25,7 @@ def make_dataset(dataset, verbose=True, base_path=''):
 	Args:
 		dataset (str): the dataset name (See SYN_IDS keys in config.py).
 		verbose (bool): whether or not print information.
-		base_path (str): project root directory.
+		base_path (str): project root directory's path.
 	Returns:
 		data_path (str): the full path of the dataset folder.
 	"""
@@ -188,3 +188,22 @@ def get_date_time():
 	ts = datetime.timestamp(datetime.now())
 	date_time = datetime.fromtimestamp(ts)
 	return date_time.strftime("%Y-%m-%d %H:%M:%S")
+
+
+def save_results(file, metrics):
+	"""Save the metrics to csv file.
+	Args:
+		file (str): the file path where to save data.
+		metrics (dict): the metrics of the experiment.
+	Returns:
+		None.
+	"""
+	if os.path.isfile(file):
+		with open(file, 'a', encoding='utf-8') as outfile:
+			csvwriter = csv.writer(outfile, delimiter=',')
+			csvwriter.writerow(metrics.values())
+	else:
+		with open(file, 'w', encoding='utf-8') as outfile:
+			csvwriter = csv.writer(outfile, delimiter=',')
+			csvwriter.writerow(metrics)
+			csvwriter.writerow(metrics.values())

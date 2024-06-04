@@ -33,7 +33,15 @@ CONFIG = {
 		'TC (Tumor Core)',
 		'WT (Whole Tumor)'
 	],
-	'REMOTE_DATA': 'https://unibari-my.sharepoint.com/:u:/g/personal/a_valerio31_studenti_uniba_it/EU0C24jfgUZHqolXloD_K30BpZRdt3TI1L3MAWtkJO0zCg?e=BGHc9n&download=1'
+	'REMOTE_DATA': 'https://unibari-my.sharepoint.com/:u:/g/personal/a_valerio31_studenti_uniba_it/EU0C24jfgUZHqolXloD_K30BpZRdt3TI1L3MAWtkJO0zCg?e=BGHc9n&download=1',
+	'LLM':				{
+		'biomistral': 'BioMistral/BioMistral-7B',
+		'llama': 'meta-llama/Meta-Llama-3-8B-Instruct',
+		'mistral': 'mistralai/Mistral-7B-Instruct-v0.2',
+		'minerva': 'sapienzanlp/Minerva-1B-base-v1.0',
+		'llamantino2': 'swap-uniba/LLaMAntino-2-chat-7b-hf-UltraChat-ITA',
+		'llamantino3': 'swap-uniba/LLaMAntino-3-ANITA-8B-Inst-DPO-ITA'
+	}
 }
 
 
