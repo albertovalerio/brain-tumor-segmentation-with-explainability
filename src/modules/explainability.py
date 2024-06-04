@@ -160,7 +160,7 @@ def _get_metrics(model_key, lang, prompt_id, prompt, output):
 	sentences = output.replace('.\n\n', '. ').replace('\n\n', '').replace('\n', '. ').split('. ')
 	emb = model.encode(sentences)
 	similarities = [cosine_similarity([emb[i]], [emb[i+1]])[0][0] for i in range(len(emb)-1)]
-	coherence_score = sum(similarities) / len(similarities)
+	coherence_score = (sum(similarities) / len(similarities)) if len(similarities) else 0.0
 
 	# Coverage of information measures
 	reference_texts = prompt.replace('.\n\n', '. ').replace('\n\n', '').replace('\n', '. ').split('. ')

@@ -1,7 +1,7 @@
 """
 Functions for training the models.
 """
-import os, random, time, calendar, datetime, csv
+import os, random, time, calendar, datetime
 from sys import platform
 import torch
 import pandas as pd
