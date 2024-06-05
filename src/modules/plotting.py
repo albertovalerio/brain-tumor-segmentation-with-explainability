@@ -388,7 +388,7 @@ def llms_textual_metrics(metrics, titles, report_path, dynamic_padding_rate = 10
 		None.
 	"""
 	df = pd.read_csv(os.path.join(report_path, 'LLM_metrics.csv'))
-	llm_en = ['llama', 'mistral', 'biomistral']
+	llm_en = ['biomistral', 'llama', 'mistral']
 	llm_it = ['llama', 'mistral', 'llamantino2', 'llamantino3', 'minerva']
 	left_ylabels = ['English', 'Italian']
 	left_score = df.groupby(['model', 'lang', 'prompt_id']).mean()[metrics[0]].to_dict()
@@ -422,21 +422,35 @@ def llms_textual_metrics(metrics, titles, report_path, dynamic_padding_rate = 10
 	plt.show()
 
 
-def llms_average_metrics(report_path):
+def llms_average_metrics(report_path, lang = 'all'):
 	"""
 	Plot all metrics by averaging their values.
 	Args:
 		report_path (str): absolute path where metrics data are saved.
+		lang (str): the language by which aggregate the results. Deafult `all` do not filter by language.
 	Returns:
 		None.
 	"""
 	df = pd.read_csv(os.path.join(report_path, 'LLM_metrics.csv'))
 	metrics = [m for m in df.columns if m not in ['model', 'lang', 'prompt_id']]
+	llms = {
+		'en': ['biomistral', 'llama', 'mistral'],
+		'it': ['llama', 'mistral', 'llamantino2', 'llamantino3', 'minerva'],
+		'all': ['biomistral', 'llama', 'mistral', 'llamantino2', 'llamantino3', 'minerva']
+	}
 	print(''.join(['> ' for i in range(55)]))
-	print(f'\n{"METRIC":<24}{"BIOMISTRAL":>14}{"LLAMA":>14}{"MISTRAL":>14}{"MINERVA":>14}{"LLAMANTINO2":>14}{"LLAMANTINO3":>14}\n')
+	if lang.lower() == 'en':
+		print(f'\n{"METRIC":<24}{"BIOMISTRAL":>14}{"LLAMA":>14}{"MISTRAL":>14}\n')
+	elif lang.lower() == 'it':
+		print(f'\n{"METRIC":<24}{"LLAMA":>14}{"MISTRAL":>14}{"LLAMANTINO2":>14}{"LLAMANTINO3":>14}{"MINERVA":>14}\n')
+	else:
+		print(f'\n{"METRIC":<24}{"BIOMISTRAL":>14}{"LLAMA":>14}{"MISTRAL":>14}{"LLAMANTINO2":>14}{"LLAMANTINO3":>14}{"MINERVA":>14}\n')
 	print(''.join(['> ' for i in range(55)]))
 	for m in metrics:
-		data = [df.loc[df['model'] == l][m].mean() for l in df['model'].unique()]
+		if lang.lower() == 'all':
+			data = [df.loc[df['model'] == l][m].mean() for l in llms[lang.lower()]]
+		else:
+			data = [df.loc[(df['model'] == l) & (df['lang'] == lang.upper())][m].mean() for l in llms[lang.lower()]]
 		s = ''
 		for k, d in enumerate(data):
 			ds = str(round(d, 2))
