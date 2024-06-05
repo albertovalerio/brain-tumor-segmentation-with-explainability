@@ -21,6 +21,7 @@ def get_explanations(
 		lang,
 		model_key,
 		prompt_id,
+		sample_id = 2,
 		output_length = 1024,
 		write_prompt_to_file = False,
 		write_metrics_to_file = True,
@@ -33,6 +34,7 @@ def get_explanations(
 		lang (str): the language of the experiment.
 		model_key (str): the model ID according to HuggingFace API (See: https://huggingface.co/models).
 		prompt_id (str/int): the ID of the prompt. Possible options are '1' or '2'.
+		sample_id (str/int): the ID of an image sample from those available in `json` folder.
 		output_length (int): the number of output's tokens.
 		write_prompt_to_file (bool): whether or not to save the output to file.
 		write_metrics_to_file (bool): whether or not to save the metrics to file.
@@ -47,7 +49,7 @@ def get_explanations(
 	_config = get_config()
 	model_id = _config.get('LLM').get(model_key)
 	output_path, json_path, reports_path = _get_paths(lang, base_path)
-	prompt = _get_prompt(lang, prompt_id, json_path)
+	prompt = _get_prompt(lang, prompt_id, json_path, sample_id)
 	start = time.time()
 	tokenizer = AutoTokenizer.from_pretrained(model_id)
 	model = AutoModelForCausalLM.from_pretrained(model_id).to(device)
@@ -115,14 +117,14 @@ def _get_paths(lang, base_path=''):
 	return output_path, json_path, reports_path
 
 
-def _get_prompt(lang, prompt_id, json_path, sample_id = 2):
+def _get_prompt(lang, prompt_id, json_path, sample_id):
 	"""
 	Returns the full input prompt.
 	Args:
 		lang (str): the language of the experiment.
 		prompt_id (str/int): the ID of the prompt. Possible options are '1' or '2'.
 		json_path (str): the folder where to find the JSON description files.
-		sample_id (str/int): the test sample id. Possible options are '1', '2' or '3'.
+		sample_id (str/int): the test sample ID from those available in `json` folder.
 	Returns:
 		prompt (str): the full input prompt.
 	"""
