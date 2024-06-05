@@ -41,6 +41,14 @@ CONFIG = {
 		'minerva': 'sapienzanlp/Minerva-1B-base-v1.0',
 		'llamantino2': 'swap-uniba/LLaMAntino-2-chat-7b-hf-UltraChat-ITA',
 		'llamantino3': 'swap-uniba/LLaMAntino-3-ANITA-8B-Inst-DPO-ITA'
+	},
+	'LLM_PARAMS':				{
+		'biomistral': '7B',
+		'llama': '8B',
+		'mistral': '7B',
+		'minerva': '1B',
+		'llamantino2': '7B',
+		'llamantino3': '8B'
 	}
 }
 

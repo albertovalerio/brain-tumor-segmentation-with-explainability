@@ -115,19 +115,20 @@ def _get_paths(lang, base_path=''):
 	return output_path, json_path, reports_path
 
 
-def _get_prompt(lang, prompt_id, json_path):
+def _get_prompt(lang, prompt_id, json_path, sample_id = 2):
 	"""
 	Returns the full input prompt.
 	Args:
 		lang (str): the language of the experiment.
 		prompt_id (str/int): the ID of the prompt. Possible options are '1' or '2'.
 		json_path (str): the folder where to find the JSON description files.
+		sample_id (str/int): the test sample id. Possible options are '1', '2' or '3'.
 	Returns:
 		prompt (str): the full input prompt.
 	"""
 	_prompt = get_prompt()
 	prompt = _prompt.get(lang).get('prompt_' + str(prompt_id))
-	with open(os.path.join(json_path, 'SegResNet_sample_2_' + lang.upper() + '.json'), 'r') as f:
+	with open(os.path.join(json_path, 'SegResNet_sample_' + str(sample_id) + '_' + lang.upper() + '.json'), 'r') as f:
 		d = json.load(f)
 		prompt += str(d)
 	return prompt

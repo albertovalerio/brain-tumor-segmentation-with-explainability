@@ -339,3 +339,110 @@ def available_llms():
 	print(''.join(['> ' for i in range(35)]))
 	for k in llms.keys():
 		print(f'\033[1m{k:<15}\033[0m{llms[k].split("/")[-1]:<25}')
+
+
+def llms_metrics(report_path):
+	"""
+	Plot metrics related to LLMs.
+	Args:
+		report_path (str): absolute path where metrics data are saved.
+	Returns:
+		None.
+	"""
+	_config = get_config()
+	llm_params = _config.get('LLM_PARAMS')
+	llm_params = {k: int(v[:-1]) for k, v in llm_params.items()}
+	llm_params = {k: v for k, v in sorted(llm_params.items(), key = lambda item: item[1], reverse = False)}
+	df = pd.read_csv(os.path.join(report_path, 'LLM_metrics.csv'))
+	llm_times = df.loc[:, df.columns != 'lang'].groupby('model').mean()['inference_time'].to_dict()
+	llm_times = {k: v for k, v in sorted(llm_times.items(), key = lambda item: item[1], reverse = False)}
+	fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 6))
+	rects = ax1.barh(list(llm_params.keys()), list(llm_params.values()), align='center', height=0.5)
+	ax1.bar_label(rects, [str(i) + 'B' for i in list(llm_params.values())], padding=-30, color='white', fontsize=16, fontweight='bold')
+	ax1.set_xticks(np.arange(0, max(list(llm_params.values())) + 1))
+	ax1.set_yticks(ticks=list(llm_params.keys()), labels=list(llm_params.keys()), fontsize=14)
+	ax1.xaxis.grid(True, linestyle='--', which='major', color='grey', alpha=.25)
+	ax1.set_title('Number of params', fontsize=20, fontweight='bold')
+	ax1.set_xlabel('Number of params (in billions)', fontsize=14)
+	rects = ax2.barh(list(llm_times.keys()), list(llm_times.values()), align='center', height=0.5)
+	ax2.bar_label(rects, [str(int(i)) + 's' for i in list(llm_times.values())], padding=-48, color='white', fontsize=16, fontweight='bold')
+	ax2.set_xticks(np.arange(0, max(list(llm_times.values())) + 10, 50))
+	ax2.set_yticks(ticks=list(llm_times.keys()), labels=list(llm_times.keys()), fontsize=14)
+	ax2.xaxis.grid(True, linestyle='--', which='major', color='grey', alpha=.25)
+	ax2.set_title('Inference times', fontsize=20, fontweight='bold')
+	ax2.set_xlabel('Inference times (in seconds)', fontsize=14)
+	fig.tight_layout()
+	plt.show()
+
+
+
+def llms_textual_metrics(metrics, titles, report_path, dynamic_padding_rate = 10):
+	"""
+	Plot metrics related to LLMs textual outputs.
+	Args:
+		metrics (list): two numerical metrics to plot included in the report file.
+		titles (list): two titles to associate to the selected metrics.
+		report_path (str): absolute path where metrics data are saved.
+		dynamic_padding_rate (int): plotted lines padding expressed as percentage.
+	Returns:
+		None.
+	"""
+	df = pd.read_csv(os.path.join(report_path, 'LLM_metrics.csv'))
+	llm_en = ['llama', 'mistral', 'biomistral']
+	llm_it = ['llama', 'mistral', 'llamantino2', 'llamantino3', 'minerva']
+	left_ylabels = ['English', 'Italian']
+	left_score = df.groupby(['model', 'lang', 'prompt_id']).mean()[metrics[0]].to_dict()
+	left_score_en = [[v for k, v in left_score.items() if k[0] == m and k[1] == 'EN' ] for m in llm_en]
+	left_score_it = [[v for k, v in left_score.items() if k[0] == m and k[1] == 'IT' ] for m in llm_it]
+	right_score = df.groupby(['model', 'lang', 'prompt_id']).mean()[metrics[1]].to_dict()
+	right_score_en = [[v for k, v in right_score.items() if k[0] == m and k[1] == 'EN' ] for m in llm_en]
+	right_score_it = [[v for k, v in right_score.items() if k[0] == m and k[1] == 'IT' ] for m in llm_it]
+
+	fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(18, 12))
+	axs = [ax1, ax2, ax3, ax4]
+	data = [left_score_en, right_score_en, left_score_it, right_score_it]
+	for j, ax in enumerate(axs):
+		llms = llm_en if j < 2 else llm_it
+		ticks = [i for i in range(len(llms))]
+		ax.plot(ticks, data[j], label=['Prompt_1', 'Prompt_2'], marker='D', markersize=12, linewidth=3)
+		ax.plot(ticks, [np.mean(i) for i in data[j]], label='mean', color='red', marker='o', markersize=8, linestyle='dotted', linewidth=2)
+		ax.set_xticks(ticks=ticks, labels=llms, fontsize=14)
+		ax.yaxis.grid(True, linestyle='--', which='major', color='grey', alpha=.25)
+		ax.legend(fontsize=12, labelspacing=1)
+		if j < 2:
+			ax.set_title(titles[j], fontsize=20, fontweight='bold', pad=20)
+		if j % 2 == 0:
+			ax.set_ylabel(left_ylabels[int(j/2)], fontsize=16, fontweight='bold')
+			dyn_pad = (max(left_score.values()) - min(left_score.values())) * dynamic_padding_rate / 100
+			ax.set_ylim([min(left_score.values()) - dyn_pad, max(left_score.values()) + dyn_pad])
+		else:
+			dyn_pad = (max(right_score.values()) - min(right_score.values())) * dynamic_padding_rate / 100
+			ax.set_ylim([min(right_score.values()) - dyn_pad, max(right_score.values()) + dyn_pad])
+	fig.tight_layout()
+	plt.show()
+
+
+def llms_average_metrics(report_path):
+	"""
+	Plot all metrics by averaging their values.
+	Args:
+		report_path (str): absolute path where metrics data are saved.
+	Returns:
+		None.
+	"""
+	df = pd.read_csv(os.path.join(report_path, 'LLM_metrics.csv'))
+	metrics = [m for m in df.columns if m not in ['model', 'lang', 'prompt_id']]
+	print(''.join(['> ' for i in range(55)]))
+	print(f'\n{"METRIC":<24}{"BIOMISTRAL":>14}{"LLAMA":>14}{"MISTRAL":>14}{"MINERVA":>14}{"LLAMANTINO2":>14}{"LLAMANTINO3":>14}\n')
+	print(''.join(['> ' for i in range(55)]))
+	for m in metrics:
+		data = [df.loc[df['model'] == l][m].mean() for l in df['model'].unique()]
+		s = ''
+		for k, d in enumerate(data):
+			ds = str(round(d, 2))
+			s += ''.join([' ' for i in range(14 - len(ds))])
+			if m == 'inference_time':
+				s += ('\033[1m\033[91m'+ds+'\033[0m' if k == np.argmax(data) else ('\033[1m\033[92m'+ds+'\033[0m' if k ==  np.argmin(data) else ds))
+			else:
+				s += ('\033[1m\033[92m'+ds+'\033[0m' if k == np.argmax(data) else ('\033[1m\033[91m'+ds+'\033[0m' if k ==  np.argmin(data) else ds))
+		print(f'{m:<24}{s:>14}')

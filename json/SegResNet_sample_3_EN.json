@@ -1,0 +1,59 @@
+{
+	"MRI_Scan": {
+		"Tumor_Details": {
+			"Spatial_Distribution": [
+				{
+					"Region": "Frontal-to-Occipital (GapMap) right",
+					"Percentage_of_Tumor": 81.43,
+					"Percentage_of_Region_Affected": 30.32
+				},
+				{
+					"Region": "Frontal-to-Occipital (GapMap) left",
+					"Percentage_of_Tumor": 6.41,
+					"Percentage_of_Region_Affected": 2.21
+				},
+				{
+					"Region": "Area hOc1 (V1, 17, CalcS) right",
+					"Percentage_of_Tumor": 3.35,
+					"Percentage_of_Region_Affected": 3.5
+				},
+				{
+					"Region": "Area 7P (SPL) right",
+					"Percentage_of_Tumor": 3.09,
+					"Percentage_of_Region_Affected": 10.83
+				},
+				{
+					"Region": "Area hOc2 (V2, 18) right",
+					"Percentage_of_Tumor": 1.24,
+					"Percentage_of_Region_Affected": 2.1
+				}
+			],
+			"Semantic_Segmentation": {
+				"Tumor_Core": {
+					"Color": "red"
+				},
+				"Peritumoral_Edema": {
+					"Color": "yellow"
+				},
+				"GD_Enhancing_Tumor": {
+					"Color": "green"
+				}
+			},
+			"Segmentation_Confidence": {
+				"Dice_Score": {
+					"Enhancing_Tumor": 0.88,
+					"Tumor_Core": 0.92,
+					"Whole_Tumor": 0.9,
+					"Average": 0.9
+				},
+				"Hausdorff_Distance": {
+					"Enhancing_Tumor": 1.41,
+					"Tumor_Core": 2.24,
+					"Whole_Tumor": 8.25,
+					"Average": 3.97
+				}
+			},
+			"Model_Used": "SegResNet"
+		}
+	}
+}
