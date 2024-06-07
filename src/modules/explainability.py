@@ -130,9 +130,16 @@ def _get_prompt(lang, prompt_id, json_path, sample_id):
 	"""
 	_prompt = get_prompt()
 	prompt = _prompt.get(lang).get('prompt_' + str(prompt_id))
-	with open(os.path.join(json_path, 'SegResNet_sample_' + str(sample_id) + '_' + lang.upper() + '.json'), 'r') as f:
-		d = json.load(f)
-		prompt += str(d)
+	sample_name = 'SegResNet_sample_' + str(sample_id) + '_' + lang.upper() + '.json'
+	if sample_name in os.listdir(json_path):
+		with open(os.path.join(json_path, sample_name), 'r') as f:
+			d = json.load(f)
+			prompt += str(d)
+	else:
+		print('\n' + ''.join(['> ' for i in range(30)]))
+		print('\nERROR: sample_id \033[95m '+sample_id+'\033[0m not found.\n')
+		print(''.join(['> ' for i in range(30)]) + '\n')
+		prompt = ''
 	return prompt
 
 
