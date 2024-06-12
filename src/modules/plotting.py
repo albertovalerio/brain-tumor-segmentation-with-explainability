@@ -455,7 +455,7 @@ def llms_average_metrics(report_path, lang = 'all'):
 		for k, d in enumerate(data):
 			ds = str(round(d, 2))
 			s += ''.join([' ' for i in range(14 - len(ds))])
-			if m == 'inference_time':
+			if m == 'inference_time' or m == 'diversity_MAAS':
 				s += ('\033[1m\033[91m'+ds+'\033[0m' if k == np.argmax(data) else ('\033[1m\033[92m'+ds+'\033[0m' if k ==  np.argmin(data) else ds))
 			else:
 				s += ('\033[1m\033[92m'+ds+'\033[0m' if k == np.argmax(data) else ('\033[1m\033[91m'+ds+'\033[0m' if k ==  np.argmin(data) else ds))
