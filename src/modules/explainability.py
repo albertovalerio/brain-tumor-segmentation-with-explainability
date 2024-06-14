@@ -175,7 +175,8 @@ def _get_metrics(model_key, lang, prompt_id, prompt, output):
 	# Coverage of information measures
 	reference_texts = prompt.replace('.\n\n', '. ').replace('\n\n', '').replace('\n', '. ').split('. ')
 	reference_embeddings = model.encode(reference_texts)
-	ref_similarities = cosine_similarity(emb, reference_embeddings)
+	text_embeddings = model.encode([output])
+	ref_similarities = cosine_similarity(text_embeddings, reference_embeddings)
 	coverage_embedding_based = sum(ref_similarities[0]) / len(reference_texts)
 
 	text_input = [t.text.lower() for t in nlp(prompt.replace('\n', ' ')) if not (t.is_punct or t.is_stop)]
