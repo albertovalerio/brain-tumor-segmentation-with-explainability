@@ -40,15 +40,25 @@ CONFIG = {
 		'mistral': 'mistralai/Mistral-7B-Instruct-v0.2',
 		'minerva': 'sapienzanlp/Minerva-1B-base-v1.0',
 		'llamantino2': 'swap-uniba/LLaMAntino-2-chat-7b-hf-UltraChat-ITA',
-		'llamantino3': 'swap-uniba/LLaMAntino-3-ANITA-8B-Inst-DPO-ITA'
+		'llamantino3': 'swap-uniba/LLaMAntino-3-ANITA-8B-Inst-DPO-ITA',
+		'groq_llama': 'llama3-70b-8192',
+		'groq_mixtral': 'mixtral-8x7b-32768',
+		'groq_gemma': 'gemma-7b-it'
 	},
 	'LLM_PARAMS':				{
-		'biomistral': '7B',
-		'llama': '8B',
-		'mistral': '7B',
-		'minerva': '1B',
-		'llamantino2': '7B',
-		'llamantino3': '8B'
+		'hf': {
+			'biomistral': '7B',
+			'llama': '8B',
+			'mistral': '7B',
+			'minerva': '1B',
+			'llamantino2': '7B',
+			'llamantino3': '8B'
+		},
+		'groq': {
+			'gemma': '7B',
+			'llama': '70B',
+			'mixtral': '7B',
+		}
 	}
 }
 

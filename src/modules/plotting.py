@@ -341,19 +341,20 @@ def available_llms():
 		print(f'\033[1m{k:<15}\033[0m{llms[k].split("/")[-1]:<25}')
 
 
-def llms_metrics(report_path):
+def llms_metrics(report_path, report_source = 'hf'):
 	"""
 	Plot metrics related to LLMs.
 	Args:
 		report_path (str): absolute path where metrics data are saved.
+		report_source (str): the data source (`hf` for HuggingFace, `groq` for Groq).
 	Returns:
 		None.
 	"""
 	_config = get_config()
-	llm_params = _config.get('LLM_PARAMS')
+	llm_params = _config.get('LLM_PARAMS').get(report_source)
 	llm_params = {k: int(v[:-1]) for k, v in llm_params.items()}
 	llm_params = {k: v for k, v in sorted(llm_params.items(), key = lambda item: item[1], reverse = False)}
-	df = pd.read_csv(os.path.join(report_path, 'LLM_metrics.csv'))
+	df = pd.read_csv(os.path.join(report_path, 'LLM_metrics_' + report_source.upper() + '.csv'))
 	llm_times = df.loc[:, df.columns != 'lang'].groupby('model').mean()['inference_time'].to_dict()
 	llm_times = {k: v for k, v in sorted(llm_times.items(), key = lambda item: item[1], reverse = False)}
 	fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 6))
@@ -376,20 +377,27 @@ def llms_metrics(report_path):
 
 
 
-def llms_textual_metrics(metrics, titles, report_path, dynamic_padding_rate = 10):
+def llms_textual_metrics(
+		metrics,
+		titles,
+		report_path,
+		report_source = 'hf',
+		dynamic_padding_rate = 10
+	):
 	"""
 	Plot metrics related to LLMs textual outputs.
 	Args:
 		metrics (list): two numerical metrics to plot included in the report file.
 		titles (list): two titles to associate to the selected metrics.
 		report_path (str): absolute path where metrics data are saved.
+		report_source (str): the data source (`hf` for HuggingFace, `groq` for Groq).
 		dynamic_padding_rate (int): plotted lines padding expressed as percentage.
 	Returns:
 		None.
 	"""
-	df = pd.read_csv(os.path.join(report_path, 'LLM_metrics.csv'))
-	llm_en = ['biomistral', 'llama', 'mistral']
-	llm_it = ['llama', 'mistral', 'llamantino2', 'llamantino3', 'minerva']
+	df = pd.read_csv(os.path.join(report_path, 'LLM_metrics_' + report_source.upper() + '.csv'))
+	llm_en = df[df['lang'] == 'EN']['model'].unique()
+	llm_it = df[df['lang'] == 'IT']['model'].unique()
 	left_ylabels = ['English', 'Italian']
 	left_score = df.groupby(['model', 'lang', 'prompt_id']).mean()[metrics[0]].to_dict()
 	left_score_en = [[v for k, v in left_score.items() if k[0] == m and k[1] == 'EN' ] for m in llm_en]
@@ -422,35 +430,30 @@ def llms_textual_metrics(metrics, titles, report_path, dynamic_padding_rate = 10
 	plt.show()
 
 
-def llms_average_metrics(report_path, lang = 'all'):
+def llms_average_metrics(report_path, report_source = 'hf', lang = 'all'):
 	"""
 	Plot all metrics by averaging their values.
 	Args:
 		report_path (str): absolute path where metrics data are saved.
+		report_source (str): the data source (`hf` for HuggingFace, `groq` for Groq)
 		lang (str): the language by which aggregate the results. Deafult `all` do not filter by language.
 	Returns:
 		None.
 	"""
-	df = pd.read_csv(os.path.join(report_path, 'LLM_metrics.csv'))
+	df = pd.read_csv(os.path.join(report_path, 'LLM_metrics_' + report_source.upper() + '.csv'))
 	metrics = [m for m in df.columns if m not in ['model', 'lang', 'prompt_id']]
-	llms = {
-		'en': ['biomistral', 'llama', 'mistral'],
-		'it': ['llama', 'mistral', 'llamantino2', 'llamantino3', 'minerva'],
-		'all': ['biomistral', 'llama', 'mistral', 'llamantino2', 'llamantino3', 'minerva']
-	}
+	llms = df['model'].unique() if lang == 'all' else df[df['lang'] == lang]['model'].unique()
 	print(''.join(['> ' for i in range(55)]))
-	if lang.lower() == 'en':
-		print(f'\n{"METRIC":<24}{"BIOMISTRAL":>14}{"LLAMA":>14}{"MISTRAL":>14}\n')
-	elif lang.lower() == 'it':
-		print(f'\n{"METRIC":<24}{"LLAMA":>14}{"MISTRAL":>14}{"LLAMANTINO2":>14}{"LLAMANTINO3":>14}{"MINERVA":>14}\n')
-	else:
-		print(f'\n{"METRIC":<24}{"BIOMISTRAL":>14}{"LLAMA":>14}{"MISTRAL":>14}{"LLAMANTINO2":>14}{"LLAMANTINO3":>14}{"MINERVA":>14}\n')
+	sm = 'METRIC' + ''.join([' ' for i in range(20)])
+	for m in llms:
+		sm += m.upper() + ''.join([' ' for i in range(14 - len(m))])
+	print('\n', sm, '\n')
 	print(''.join(['> ' for i in range(55)]))
 	for m in metrics:
 		if lang.lower() == 'all':
-			data = [df.loc[df['model'] == l][m].mean() for l in llms[lang.lower()]]
+			data = [df.loc[df['model'] == l][m].mean() for l in llms]
 		else:
-			data = [df.loc[(df['model'] == l) & (df['lang'] == lang.upper())][m].mean() for l in llms[lang.lower()]]
+			data = [df.loc[(df['model'] == l) & (df['lang'] == lang.upper())][m].mean() for l in llms]
 		s = ''
 		for k, d in enumerate(data):
 			ds = str(round(d, 2))

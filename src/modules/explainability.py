@@ -12,9 +12,11 @@ from spacy.lang.it import Italian
 import textstat as ts
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
+from dotenv import dotenv_values
+from groq import Groq
 
 
-__all__ = ['get_explanations']
+__all__ = ['get_explanations', 'get_explanations_via_groq']
 
 
 def get_explanations(
@@ -29,7 +31,7 @@ def get_explanations(
 		verbose = True
 	):
 	"""
-	Computes the explanations of the model output.
+	Generates the medical report and its metrics based on segmentation model output.
 	Args:
 		lang (str): the language of the experiment.
 		model_key (str): the model ID according to HuggingFace API (See: https://huggingface.co/models).
@@ -82,13 +84,81 @@ def get_explanations(
 			f.write(readable_output)
 	if write_metrics_to_file:
 		save_results(
-			file = os.path.join(reports_path, 'LLM_metrics.csv'),
+			file = os.path.join(reports_path, 'LLM_metrics_HF.csv'),
 			metrics = metrics
 		)
 	if verbose:
 		print(readable_output.replace('. ', '. \n'))
 	del tokenizer, model, inputs, outputs
 	return readable_output, metrics
+
+
+def get_explanations_via_groq(
+		lang,
+		model_key,
+		prompt_id,
+		sample_id = 2,
+		output_length = 1024,
+		write_prompt_to_file = False,
+		write_metrics_to_file = True,
+		base_path = '',
+		verbose = True
+	):
+	"""
+	Generates the medical report and its metrics based on segmentation model output.
+	LLM inference provided by Groq API (See: https://console.groq.com/docs).
+	Args:
+		lang (str): the language of the experiment.
+		model_key (str): the model ID according to Groq API (See: https://console.groq.com/docs/models).
+		prompt_id (str/int): the ID of the prompt. Possible options are '1' or '2'.
+		sample_id (str/int): the ID of an image sample from those available in `json` folder.
+		output_length (int): the number of output's tokens.
+		write_prompt_to_file (bool): whether or not to save the output to file.
+		write_metrics_to_file (bool): whether or not to save the metrics to file.
+		base_path (str): project root directory's path.
+		verbose (bool): whether or not to print the output.
+	Returns:
+		readable_output (str): the explanation (medical report) output.
+		metrics (dict): the computed metrics.
+	"""
+	_env = dotenv_values(os.path.join(base_path, '.env'))
+	if _env.get('GROQ_API_KEY') is not None:
+		_config = get_config()
+		model_id = _config.get('LLM').get(model_key)
+		output_path, json_path, reports_path = _get_paths(lang, base_path)
+		prompt = _get_prompt(lang, prompt_id, json_path, sample_id)
+		start = time.time()
+		client = Groq(api_key=_env.get('GROQ_API_KEY'))
+		chat_completion = client.chat.completions.create(
+			messages=[{'role': 'user', 'content': prompt}],
+			model='llama3-70b-8192',
+			temperature = 0.6,
+			max_tokens=output_length,
+			top_p = 0.9
+		)
+		readable_output = chat_completion.choices[0].message.content
+		end = time.time()
+		metrics = _get_metrics(model_key, lang, prompt_id, prompt, readable_output)
+		metrics['inference_time'] = end - start
+		if write_prompt_to_file:
+			with open(os.path.join(output_path, model_id.split('/')[-1] + '.md'), 'a') as f:
+				f.write('\n\n# **Prompt**\n\n')
+				f.write(prompt)
+				f.write('\n\n# **Output**\n\n')
+				f.write(readable_output)
+		if write_metrics_to_file:
+			save_results(
+				file = os.path.join(reports_path, 'LLM_metrics_GROQ.csv'),
+				metrics = metrics
+			)
+		if verbose:
+			print(readable_output.replace('. ', '. \n'))
+		return readable_output, metrics
+	else:
+		print('\n' + ''.join(['> ' for i in range(40)]))
+		print('\nERROR: missing auth token! Please check your\033[95m .env\033[0m file.\n')
+		print(''.join(['> ' for i in range(40)]) + '\n')
+		return ''
 
 
 def _get_paths(lang, base_path=''):
