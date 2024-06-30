@@ -41,16 +41,16 @@
 			},
 			"Segmentation_Confidence": {
 				"Dice_Score": {
-					"Enhancing_Tumor": 0.96,
-					"Tumor_Core": 0.97,
-					"Whole_Tumor": 0.97,
-					"Average": 0.97
+					"Enhancing_Tumor": 0.88,
+					"Tumor_Core": 0.91,
+					"Whole_Tumor": 0.93,
+					"Average": 0.91
 				},
 				"Hausdorff_Distance": {
-					"Enhancing_Tumor": 1.0,
-					"Tumor_Core": 1.41,
-					"Whole_Tumor": 2.24,
-					"Average": 1.55
+					"Enhancing_Tumor": 3.69,
+					"Tumor_Core": 4.35,
+					"Whole_Tumor": 4.99,
+					"Average": 4.34
 				}
 			},
 			"Model_Used": "SegResNet"

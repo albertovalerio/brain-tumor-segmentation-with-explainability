@@ -131,7 +131,7 @@ def get_explanations_via_groq(
 		client = Groq(api_key=_env.get('GROQ_API_KEY'))
 		chat_completion = client.chat.completions.create(
 			messages=[{'role': 'user', 'content': prompt}],
-			model='llama3-70b-8192',
+			model=model_id,
 			temperature = 0.6,
 			max_tokens=output_length,
 			top_p = 0.9
