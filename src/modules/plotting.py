@@ -430,13 +430,14 @@ def llms_textual_metrics(
 	plt.show()
 
 
-def llms_average_metrics(report_path, report_source = 'hf', lang = 'all'):
+def llms_average_metrics(report_path, report_source = 'hf', lang = 'all', rounding = 2):
 	"""
 	Plot all metrics by averaging their values.
 	Args:
 		report_path (str): absolute path where metrics data are saved.
 		report_source (str): the data source (`hf` for HuggingFace, `groq` for Groq)
 		lang (str): the language by which aggregate the results. Deafult `all` do not filter by language.
+		rounding (int): number of decimal digits.
 	Returns:
 		None.
 	"""
@@ -456,7 +457,7 @@ def llms_average_metrics(report_path, report_source = 'hf', lang = 'all'):
 			data = [df.loc[(df['model'] == l) & (df['lang'] == lang.upper())][m].mean() for l in llms]
 		s = ''
 		for k, d in enumerate(data):
-			ds = str(round(d, 2))
+			ds = str(round(d, rounding))
 			s += ''.join([' ' for i in range(14 - len(ds))])
 			if m == 'inference_time' or m == 'diversity_MAAS':
 				s += ('\033[1m\033[91m'+ds+'\033[0m' if k == np.argmax(data) else ('\033[1m\033[92m'+ds+'\033[0m' if k ==  np.argmin(data) else ds))
