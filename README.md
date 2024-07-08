@@ -16,6 +16,8 @@ stages:
 3. JSON Construction
 4. Prompt Engineering and LLMs Integration
 
+![framework pipeline](/images/pipeline.jpg)
+
 
 ## Requirements
 * **Global requirements**: Python >= 3.8 (tested on 3.11.4 and 3.11.7)
@@ -112,10 +114,10 @@ LLM prompting was carried out on the following resources:
 #### Segmentation models results
 ![results](/images/metrics.png)
 
-#### Language models explainable medical reports
-1. **[Meta-Llama-3-8B-Instruct.md](/prompts/en/Meta-Llama-3-8B-Instruct.md)**
-2. **[Mistral-7B-Instruct-v0.2.md](/prompts/en/Mistral-7B-Instruct-v0.2.md)**
-3. **[BioMistral-7B.md](/prompts/en/BioMistral-7B.md)**
+#### Language models generated medical reports
+
+1. **[English outputs](/prompts/en)**
+2. **[Italian outputs](/prompts/it)**
 
 
 ## Authors
@@ -126,7 +128,7 @@ The present project has been realized by me **[@albertovalerio](https://github.c
 
 - Segmentations models and metrics adapted from **[@Project-MONAI](https://monai.io/)** implementation.
 - Brain atlas refers to **[@Julich-Brain-Cytoarchitectonic-Atlas](https://julich-brain-atlas.de/)** institute.
-- Language models taken from **[@HuggingFace](https://huggingface.co/)** community.
+- Language models taken from **[@HuggingFace](https://huggingface.co/)** community and **[@Groq](https://groq.com/)** API.
 - Dataset from **[@BraTS-2023](https://www.synapse.org/#!Synapse:syn51156910/wiki/622351)** challenge.
 
 #### Further acknowledgments
@@ -135,6 +137,7 @@ The present project has been realized by me **[@albertovalerio](https://github.c
 - **[@Nilearn](https://nilearn.github.io/)**
 - **[@SIIBrA (Software Interface for Interacting with Brain Atlases)](https://siibra-python.readthedocs.io/)**
 - **[@PyTorch](https://pytorch.org/)**
+- **[@SpaCy](https://spacy.io/)**
 - **[@NumPy](https://numpy.org/)**
 - **[@Matplotlib](https://matplotlib.org/)**
 
