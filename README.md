@@ -12,12 +12,12 @@ DEMO: [https://demo-ern2024.albertovalerio.com/](https://demo-ern2024.albertoval
 
 This repository includes all necessary files and instructions to reproduce the main experiments and results presented in the paper. If you find this code useful, please consider citing our paper:
 
-```python
+```latex
 @article{castellano2024segmentation,
   title={From Segmentation to Explanation: Generating Textual Reports from MRI with Llms},
   author={Castellano, Giovanna and de Benedictis, Salvatore and Trufanova, Katya and Valerio, Alberto G and Vessio, Gennaro},
   journal={Available at SSRN 4974224}
-  doi={"https://dx.doi.org/10.2139/ssrn.4974224"}
+  doi={https://dx.doi.org/10.2139/ssrn.4974224}
 }
 ```
 
