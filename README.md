@@ -3,8 +3,12 @@
 This repository contains the code, and resources associated with the paper:
 
 **From Segmentation to Explanation: Generating Textual Reports from MRI with LLMs**
+
 Authors: [Giovanna Castellano](https://github.com/giocastellano), [Salvatore de Benedictis](https://github.com/salvatoredebenedictis), [Katya Trufanova](https://github.com/katyatrufanova), [Alberto G. Valerio](https://github.com/albertovalerio), [Gennaro Vessio](https://github.com/gvessio)
+
 DOI: [10.2139/ssrn.4974224](https://dx.doi.org/10.2139/ssrn.4974224)
+
+DEMO: [https://demo-ern2024.albertovalerio.com/](https://demo-ern2024.albertovalerio.com/)
 
 This repository includes all necessary files and instructions to reproduce the main experiments and results presented in the paper. If you find this code useful, please consider citing our paper:
 
