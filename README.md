@@ -1,13 +1,28 @@
 # brain-tumor-segmentation-with-explainability
 
-This works presents an eXplainable Artificial Intelligence (XAI) framework for brain
-tumor detection and analysis from Magnetic Resonance Imaging (MRI) data. The proposed approach integrates advanced deep learning techniques for accurate brain tumor segmentation with XAI methodologies to generate human-interpretable explanations of the AI system’s decision-making process.
+This repository contains the code, and resources associated with the paper:
 
-The primary objective of this work is to develop an innovative system capable
-of providing explainable brain tumor detection. The proposed approach is novel in
-the relevant scientific literature, as it generates textual explanations (medical reports)
-from scratch, without relying on pre-existing text associated with the medical images
-or external knowledge sources. The framework also investigates multi-lingual support for textual explanations to enhance accessibility and usability in different linguistic contexts.
+**From Segmentation to Explanation: Generating Textual Reports from MRI with LLMs**
+Authors: [Giovanna Castellano](https://github.com/giocastellano), [Salvatore de Benedictis](https://github.com/salvatoredebenedictis), [Katya Trufanova](https://github.com/katyatrufanova), [Alberto G. Valerio](https://github.com/albertovalerio), [Gennaro Vessio](https://github.com/gvessio)
+DOI: [10.2139/ssrn.4974224](https://dx.doi.org/10.2139/ssrn.4974224)
+
+This repository includes all necessary files and instructions to reproduce the main experiments and results presented in the paper. If you find this code useful, please consider citing our paper:
+
+```python
+@article{castellano2024segmentation,
+  title={From Segmentation to Explanation: Generating Textual Reports from MRI with Llms},
+  author={Castellano, Giovanna and de Benedictis, Salvatore and Trufanova, Katya and Valerio, Alberto G and Vessio, Gennaro},
+  journal={Available at SSRN 4974224}
+  doi={"https://dx.doi.org/10.2139/ssrn.4974224"}
+}
+```
+
+## Abstract
+**Background and Objective**: Artificial Intelligence (AI) has significantly advanced medical imaging, yet the opacity of deep learning models remains challenging, often reducing the trust of medical professionals towards AI-driven diagnoses. As a result, there is a strong focus on making AI models more transparent and interpretable to boost healthcare providers’ confidence in these technologies.
+**Methods**: This paper introduces a novel approach to enhance AI explainability in critical medical tasks by integrating state-of-the-art semantic segmentation models with atlas-based mapping and Large Language Models (LLMs) to produce comprehensive, human-readable medical reports. The proposed framework ensures that the generated outputs are factual and context-rich, enhancing the transparency and interpretability of AI systems.
+**Results**: Experimental results show that the SegResNet model achieves high segmentation accuracy, while LLMs (Gemma, Llama, and Mixtral) demonstrate diverse strengths in generating explanatory reports. To assess the quality and effectiveness of generated textual explanations, numerous metrics have been employed, such as lexical diversity, readability, coherence, and information coverage.
+**Conclusions**: The method has been specifically tested on brain tumor detection for glioma, one of the most aggressive forms of cancer, and later applied to multiple sclerosis lesion detection to further validate its generalizability across medical imaging scenarios, contributing to trustworthiness in healthcare AI applications.
+
 
 The methodology employed in this work can be broadly divided into four main
 stages:
