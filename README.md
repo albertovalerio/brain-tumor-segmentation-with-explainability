@@ -23,8 +23,11 @@ This repository includes all necessary files and instructions to reproduce the m
 
 ## Abstract
 **Background and Objective**: Artificial Intelligence (AI) has significantly advanced medical imaging, yet the opacity of deep learning models remains challenging, often reducing the trust of medical professionals towards AI-driven diagnoses. As a result, there is a strong focus on making AI models more transparent and interpretable to boost healthcare providers’ confidence in these technologies.
+
 **Methods**: This paper introduces a novel approach to enhance AI explainability in critical medical tasks by integrating state-of-the-art semantic segmentation models with atlas-based mapping and Large Language Models (LLMs) to produce comprehensive, human-readable medical reports. The proposed framework ensures that the generated outputs are factual and context-rich, enhancing the transparency and interpretability of AI systems.
+
 **Results**: Experimental results show that the SegResNet model achieves high segmentation accuracy, while LLMs (Gemma, Llama, and Mixtral) demonstrate diverse strengths in generating explanatory reports. To assess the quality and effectiveness of generated textual explanations, numerous metrics have been employed, such as lexical diversity, readability, coherence, and information coverage.
+
 **Conclusions**: The method has been specifically tested on brain tumor detection for glioma, one of the most aggressive forms of cancer, and later applied to multiple sclerosis lesion detection to further validate its generalizability across medical imaging scenarios, contributing to trustworthiness in healthcare AI applications.
 
 
