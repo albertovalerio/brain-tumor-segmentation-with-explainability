@@ -3,25 +3,30 @@ Definitions of postprocessing utility functions.
 """
 import numpy as np
 import siibra, json, os
+import pandas as pd
+import nibabel as nib
+from nilearn import datasets, image
+from src.helpers.utils import get_device
+from src.modules.training import predict_model
 
 
-__all__ = ['get_affected_areas', 'write_json_prompt']
+__all__ = ['get_affected_areas', 'write_json_prompt', 'write_evaluation_report']
 
 
-def get_affected_areas(parcellation, volume, top=5, verbose=False):
+def get_affected_areas(parcellation, volume, top=5, verbose=0):
 	"""
 	Computes the most affected Atlas regions and their relative percentages.
 	Args:
 		parcellation (str): the parcellation/Atlas name.
 		volume (siibra.locations.pointset.PointSet): a set of points indicating the segmentation mask.
 		top (int): number of most affected area to return.
-		verbose (bool): whether or not to print general information about Atlas.
+		verbose (int): set the level of verbosity. Possible values: 0,1,2.
 	Returns:
 		results (dict): the list of brain regions and their relative percentages.
 	"""
 	atlas = siibra.atlases['human']
 	julichbrain = atlas.get_parcellation(parcellation=parcellation)
-	if verbose:
+	if verbose > 1:
 		print(f'Name:     {julichbrain.name}')
 		print(f'Id:       {julichbrain.id}')
 		print(f'Modality: {julichbrain.modality}\n')
@@ -36,9 +41,10 @@ def get_affected_areas(parcellation, volume, top=5, verbose=False):
 	)
 	assignments = julich_pmaps.assign(volume)
 	top_r = assignments['region'].value_counts()[:top]
-	print(''.join(['> ' for i in range(40)]))
-	print(f'\n{"REGION":>40}{"%_of_TUMOR":>15}{"%_of_REGION":>15}\n')
-	print(''.join(['> ' for i in range(40)]))
+	if verbose >= 1:
+		print(''.join(['> ' for i in range(40)]))
+		print(f'\n{"REGION":>40}{"%_of_TUMOR":>15}{"%_of_REGION":>15}\n')
+		print(''.join(['> ' for i in range(40)]))
 	results = {}
 	for i, v in enumerate(top_r.index):
 		p_map = julich_pmaps.fetch(region=v)
@@ -46,7 +52,8 @@ def get_affected_areas(parcellation, volume, top=5, verbose=False):
 		results[str(v)] = {}
 		results[str(v)]['Percentage_of_Tumor'] = round((top_r[i] / len(assignments) * 100), 2)
 		results[str(v)]['Percentage_of_Region_Affected'] = round((top_r[i] / n_vox * 100), 2)
-		print(f'{str(v):>40}{(top_r[i] / len(assignments) * 100):>15.2f}{(top_r[i] / n_vox * 100):>15.2f}')
+		if verbose >= 1:
+			print(f'{str(v):>40}{(top_r[i] / len(assignments) * 100):>15.2f}{(top_r[i] / n_vox * 100):>15.2f}')
 	return results
 
 
@@ -99,3 +106,79 @@ def write_json_prompt(example, areas, paths):
 			json.dump(json_data_en, js, indent = '\t')
 		with open(os.path.join(json_path, example + '_IT.json'), 'w') as js:
 			json.dump(json_data_it, js, indent = '\t')
+
+
+def write_evaluation_report(
+	data,
+	model,
+	transforms,
+	paths,
+	write_to_file = False,
+	tumor_class = 1,
+	report_name = 'error_eval_tc.csv',
+	verbose = True
+):
+	"""
+	Execute error evaluation report, and save results to file.
+	Args:
+		data (list): the testing data.
+		model (torch.nn.Module): the trained model.
+		transform (list): transformation sequence for evaluation and post-evaluation.
+		paths (list): list of useful paths.
+		write_to_file (bool): whether to write results to csv file.
+		tumor_class (int): the BraTS tumor class. `0`=`ET`, `1`=`TC`, `2`=`WT`,
+		report_name (str): csv file name where to save data report.
+		verbose (bool): whether to print status information.
+	Returns:
+		df (pd.Dataframe): stored report information.
+	"""
+	if write_to_file:
+		df = pd.DataFrame({'subject':[],'type':[],'30':[],'29':[],'28':[],'27':[],'26':[],'25':[],'24':[],'23':[],'22':[],'21':[],'20':[],'19':[],'18':[],'17':[],'16':[],'15':[],'14':[],'13':[],'12':[],'11':[],'10':[],'9':[],'8':[],'7':[],'6':[],'5':[],'4':[],'3':[],'2':[],'1':[]})
+		for t in data:
+			df = pd.concat([df, pd.DataFrame([
+				{'subject': t['image'][0].split('/')[-2], 'type': 'Different_Regions'},
+				{'subject': t['image'][0].split('/')[-2], 'type': 'Different_Regions_Not_True'},
+				{'subject': t['image'][0].split('/')[-2], 'type': 'Different_Percentage_of_Tumor'}
+			])], ignore_index=True)
+		df.to_csv(os.path.join(paths[1], report_name), index=False, encoding='UTF-8')
+	df = pd.read_csv(os.path.join(paths[1], report_name), encoding='UTF-8')
+	parcellations = list(siibra.atlases['human'].parcellations)
+	for k, t in enumerate(data):
+		_, prediction = predict_model(
+			model = model,
+			data = [t],
+			transforms = transforms,
+			device = 'cpu', # get_device(), MPS not supported
+			paths = paths,
+			num_workers = 0,
+			write_to_file = False,
+			save_sample = False,
+			return_prediction = True
+		)
+		mask_data = prediction[0]['pred'].detach().cpu().numpy()
+		truth_data = prediction[0]['label'].detach().cpu().numpy()
+		mni_template = datasets.load_mni152_template()
+		pred = nib.Nifti1Image(np.rot90(mask_data[tumor_class], 2), affine=mni_template.affine)
+		label = nib.Nifti1Image(np.rot90(truth_data[tumor_class], 2), affine=mni_template.affine)
+		pred_norm = image.resample_to_img(pred, mni_template)
+		label_norm = image.resample_to_img(label, mni_template)
+		points_pred = siibra.PointSet(tuple(zip(*np.where(pred_norm.get_fdata() == 1))), space='mni152', sigma_mm=5).transform(mni_template.affine, space='mni152')
+		points_label = siibra.PointSet(tuple(zip(*np.where(label_norm.get_fdata() == 1))), space='mni152', sigma_mm=5).transform(mni_template.affine, space='mni152')
+		areas_pred = get_affected_areas(parcellation=parcellations[12].name, volume=points_pred, top=30)
+		areas_label = get_affected_areas(parcellation=parcellations[12].name, volume=points_label, top=30)
+		percentage_pred = [a['Percentage_of_Tumor'] for a in areas_pred.values()]
+		percentage_label = [a['Percentage_of_Tumor'] for a in areas_label.values()]
+		for i in range(min(len(areas_pred), len(areas_label)), 0, -1):
+			set_pred = set(list(areas_pred)[:i])
+			set_label = set(list(areas_label)[:i])
+			diff = set_pred.difference(set_label)
+			diff_true = set(list(diff)).difference(set(list(areas_label)))
+			percentage_diff = sum(abs(percentage_pred[j] - percentage_label[j]) for j in range(i))
+			df.loc[(df['subject'] == t['image'][0].split('/')[-2]) & (df['type'] == 'Different_Regions'), str(i)] = len(diff)
+			df.loc[(df['subject'] == t['image'][0].split('/')[-2]) & (df['type'] == 'Different_Regions_Not_True'), str(i)] = len(diff_true)
+			df.loc[(df['subject'] == t['image'][0].split('/')[-2]) & (df['type'] == 'Different_Percentage_of_Tumor'), str(i)] = percentage_diff
+			if write_to_file:
+				df.to_csv(os.path.join(paths[1], report_name), index=False, encoding='UTF-8')
+		if k % 30 == 0 and verbose == True:
+			print(f'Run: {k}/{len(data)}')
+	return df

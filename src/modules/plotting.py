@@ -464,3 +464,76 @@ def llms_average_metrics(report_path, report_source = 'hf', lang = 'all', roundi
 			else:
 				s += ('\033[1m\033[92m'+ds+'\033[0m' if k == np.argmax(data) else ('\033[1m\033[91m'+ds+'\033[0m' if k ==  np.argmin(data) else ds))
 		print(f'{m:<24}{s:>14}')
+
+
+def evaluation_error(
+	folder,
+	report_name = 'error_eval_tc.csv'
+):
+	"""
+	Plot evaluation error report.
+	Args:
+		folder (str): the path of the folder containing data.
+		report_name (str): csv file name where data report are saved.
+	Returns:
+		None.
+	"""
+	df = pd.read_csv(os.path.join(folder, report_name), encoding='UTF-8')
+	diff_regions = df[df['type'] == 'Different_Regions']
+	diff_regions_not_true = df[df['type'] == 'Different_Regions_Not_True']
+	diff_tumor = df[df['type'] == 'Different_Percentage_of_Tumor']
+	pr_all_2, pr_all_5, pr_all_all, prnt_all_1, prnt_all_2, prnt_all_all, pt_all = [], [], [], [], [], [], []
+	for i in range(30, 0, -1):
+		differences_regions = diff_regions[str(i)].dropna().to_numpy()
+		qty = np.unique(differences_regions, return_counts=True)[1]
+		percent_regions = sum(qty[1:]) * 100 / sum(qty)
+		pr_all_2.append(percent_regions)
+		percent_regions = sum(qty[2:]) * 100 / sum(qty)
+		pr_all_5.append(percent_regions)
+		percent_regions = sum(qty[3:]) * 100 / sum(qty)
+		pr_all_all.append(percent_regions)
+		differences_regions_not_true = diff_regions_not_true[str(i)].dropna().to_numpy()
+		qty = np.unique(differences_regions_not_true, return_counts=True)[1]
+		percent_regions = sum(qty[1:]) * 100 / sum(qty)
+		prnt_all_1.append(percent_regions)
+		percent_regions = sum(qty[2:]) * 100 / sum(qty)
+		prnt_all_2.append(percent_regions)
+		percent_regions = sum(qty[3:]) * 100 / sum(qty)
+		prnt_all_all.append(percent_regions)
+		differences_tumor = diff_tumor[str(i)].dropna().to_numpy()
+		percent_tumor = sum(differences_tumor) / len(differences_tumor)
+		pt_all.append(percent_tumor)
+	fig, ax = plt.subplots(1, 1, figsize=(18, 8))
+	categories = list(range(30, 0, -1))
+	line1 = ax.plot(categories, pr_all_2, label='At least 1 mismatch', color='blue', marker='o', linestyle='-', linewidth=2)
+	line2 = ax.plot(categories, pr_all_5, label='At least 2 mismatches', color='red', marker='o', linestyle='-', linewidth=2)
+	line3 = ax.plot(categories, pr_all_all, label='At least 3 mismatches', color='green', marker='o', linestyle='-', linewidth=2)
+	for i in range(len(categories)):
+		ax.text(categories[i], pr_all_2[i] + 1, f'{pr_all_2[i]:.1f}%', ha='center', va='bottom', color='blue', fontsize=10)
+		ax.text(categories[i], pr_all_5[i] + 1, f'{pr_all_5[i]:.1f}%', ha='center', va='bottom', color='red', fontsize=10)
+		ax.text(categories[i], pr_all_all[i] - 2, f'{pr_all_all[i]:.1f}%', ha='center', va='bottom', color='green', fontsize=10)
+	plt.xticks(categories)
+	plt.gca().invert_xaxis()
+	plt.xlabel('NR. OF REGIONS', labelpad=20, fontsize=12)
+	plt.ylabel('PERCENTAGE OF ERROR', labelpad=20, fontsize=12)
+	plt.title('REGIONS MISMATCH', fontsize=14)
+	plt.legend()
+	fig.tight_layout()
+	plt.show()
+	fig, ax = plt.subplots(1, 1, figsize=(18, 8))
+	categories = list(range(30, 0, -1))
+	line1 = ax.plot(categories, prnt_all_1, label='At least 1 wrong region', color='blue', marker='o', linestyle='-', linewidth=2)
+	line2 = ax.plot(categories, prnt_all_2, label='At least 2 wrong regions', color='red', marker='o', linestyle='-', linewidth=2)
+	line3 = ax.plot(categories, prnt_all_all, label='At least 3 wrong regions', color='green', marker='o', linestyle='-', linewidth=2)
+	for i in range(len(categories)):
+		ax.text(categories[i], prnt_all_1[i] + 1.5, f'{prnt_all_1[i]:.1f}%', ha='center', va='bottom', color='blue', fontsize=10)
+		ax.text(categories[i], prnt_all_2[i] + .3, f'{prnt_all_2[i]:.1f}%', ha='center', va='bottom', color='red', fontsize=10)
+		ax.text(categories[i], prnt_all_all[i] - 2, f'{prnt_all_all[i]:.1f}%', ha='center', va='bottom', color='green', fontsize=10)
+	plt.xticks(categories)
+	plt.gca().invert_xaxis()
+	plt.xlabel('NR. OF REGIONS', labelpad=20, fontsize=12)
+	plt.ylabel('PERCENTAGE OF ERROR', labelpad=20, fontsize=12)
+	plt.title('WRONG REGIONS', fontsize=14)
+	plt.legend()
+	fig.tight_layout()
+	plt.show()

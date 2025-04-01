@@ -318,6 +318,7 @@ def predict_model(
 	num_workers=4,
 	write_to_file=True,
 	save_sample=True,
+	return_prediction=False,
 	verbose=False
 ):
 	"""
@@ -332,6 +333,7 @@ def predict_model(
 		ministep (int): number of interval of data to load on RAM.
 		write_to_file (bool): whether to write results to csv file.
 		save_sample (bool): whether to save predicted image samples.
+		return_prediction (bool): whether or not return the predicted mask.
 		verbose (bool): whether or not print information.
 	Returns:
 		metrics (list): dice score and Hausdorff distance for each class.
@@ -339,8 +341,8 @@ def predict_model(
 	# unfolds grouped data/init model and utils
 	device = torch.device(device)
 	model = model.to(device)
-	samples, counter = [], 0
-	sample_ids = random.sample(range(0, len(data)), 3)
+	samples, predictions, counter = [], [], 0
+	sample_ids = random.sample(range(0, len(data)), 3) if save_sample else []
 	ministep = ministep if (len(data) > 5 and ministep > 1) else 2
 	ministeps_test = np.linspace(0, len(data), ministep).astype(int)
 	test_transform, post_test_transforms = transforms
@@ -372,6 +374,8 @@ def predict_model(
 					val_data = [post_test_transforms(i) for i in decollate_batch(val_data)]
 					if counter in sample_ids:
 						samples.append({'image': val_data[0]['image'], 'label': val_data[0]['label'], 'pred': val_data[0]['pred']})
+					if return_prediction:
+						predictions.append({'image': val_data[0]['image'], 'label': val_data[0]['label'], 'pred': val_data[0]['pred']})
 					val_outputs, val_labels = from_engine(['pred', 'label'])(val_data)
 					# compute metrics
 					dice_metric_batch(y_pred=val_outputs, y=val_labels)
@@ -415,7 +419,7 @@ def predict_model(
 			log.write('['+get_date_time()+'] Predictions ended.EXECUTING: ' + model.name + '\n')
 			log.flush()
 			log.close()
-			return metrics
+			return metrics, predictions
 	except OSError as e:
 		print('\n' + ''.join(['> ' for i in range(30)]))
 		print('\nERROR: model dump for\033[95m '+model.name+'\033[0m not found.\n')

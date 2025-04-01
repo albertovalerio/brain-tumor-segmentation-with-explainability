@@ -72,7 +72,7 @@ if __name__ == "__main__":
 		)
 
 		# making predictions
-		_ = predict_model(
+		_, _ = predict_model(
 			model = model,
 			data = test_data,
 			transforms = [eval_transform, post_test_transform],
