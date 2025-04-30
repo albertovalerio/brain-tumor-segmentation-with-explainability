@@ -215,7 +215,7 @@ def _get_prompt(lang, prompt_id, json_path, sample_id):
 
 def _get_metrics(model_key, lang, prompt_id, prompt, output):
 	"""
-	Returns the full prompt.
+	Returns the computed metrics.
 	Args:
 		model_key (str): the LLM identifier.
 		lang (str): the language of the experiment.
