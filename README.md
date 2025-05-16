@@ -67,6 +67,8 @@ cp .env.example .env
 │
 ├── logs                          <- Logs saved during the executions of training and testing phases.
 │
+├── ms_lesions                    <- Full repository containing the source code for the MS lesions case study.
+│
 ├── notebooks
 │   ├── 1-data-exploration.ipynb  <- Explorative data analysys.
 │   ├── 2-training.ipynb          <- Execution of training phase and results.

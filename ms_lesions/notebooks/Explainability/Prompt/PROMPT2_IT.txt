@@ -1,0 +1,20 @@
+
+Utilizzando i dati JSON forniti da uno studio MRI cerebrale sulla segmentazione delle lesioni calcolata dal modello di intelligenza artificiale, si prega di generare un rapporto completo che dettaglia i risultati della segmentazione delle lesioni da sclerosi multipla (SM). Descrivere la presenza delle lesioni in varie regioni secondo l'Atlante Julich-Brain, indicando la percentuale dell'area lesionata all'interno di ciascuna regione e l'impatto sulla regione, al fine di migliorare la spiegabilità del modello di segmentazione delle lesioni AI per supportare la decisione clinica.
+Il rapporto dovrebbe essere strutturato come segue:
+1. **Riepilogo della Segmentazione delle Lesioni**: Fornire una panoramica della distribuzione delle lesioni in varie regioni del cervello secondo l'Atlante Julich-Brain. Discutere la segmentazione semantica delle lesioni e le loro implicazioni.
+2. **Impatto Dettagliato a Livello Regionale**: Per ogni regione in cui è presente la lesione, descrivere la percentuale della lesione all'interno della regione e la percentuale della regione colpita dalla lesione. Discutere i ruoli e le funzioni note di queste regioni nel cervello e come la presenza della lesione potrebbe influenzare tali funzioni.
+3. **Segmentazione Semantica: Discutere i diversi aspetti delle lesioni identificati dalla segmentazione semantica e le loro potenziali implicazioni cliniche.
+Ecco il JSON:
+{
+  "Frontal-to-Occipital (GapMap) sinistra": {"Percentuale di Lesione": 26.88, "Percentuale della Regione": 6.04},
+  "Frontal-to-Occipital (GapMap) destra": {"Percentuale di Lesione": 16.82, "Percentuale della Regione": 4.08},
+  "Area hOc1 (V1, 17, CalcS) sinistra": {"Percentuale di Lesione": 8.88, "Percentuale della Regione": 7.31},
+  "Area hOc6 (POS) sinistra": {"Percentuale di Lesione": 4.23, "Percentuale della Regione": 51.55},
+  "Frontal-to-Temporal-II (GapMap) sinistra": {"Percentuale di Lesione": 3.1, "Percentuale della Regione": 2.86},
+  "nDSC": 71.75595231995298,
+  "nDSC std": 8.696038792793306,
+  "Punteggio F1 delle Lesioni": 35.110906675494164,
+  "Punteggio F1 delle Lesioni std": 14.263135368144157,
+  "nDSC R-AUC": 8.74497076414209,
+  "nDSC R-AUC std": 8.162803573241632
+}
