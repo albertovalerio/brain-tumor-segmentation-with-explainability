@@ -1,5 +1,5 @@
 """
-Main executable pipeline.
+Segmentation models training executable pipeline.
 """
 import os, sys, random, requests
 from sys import platform

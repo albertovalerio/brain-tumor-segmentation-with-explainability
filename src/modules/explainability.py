@@ -23,7 +23,7 @@ def get_explanations(
 		lang,
 		model_key,
 		prompt_id,
-		sample_id = 2,
+		sample_id,
 		output_length = 1024,
 		write_prompt_to_file = False,
 		write_metrics_to_file = True,
@@ -36,7 +36,7 @@ def get_explanations(
 		lang (str): the language of the experiment.
 		model_key (str): the model ID according to HuggingFace API (See: https://huggingface.co/models).
 		prompt_id (str/int): the ID of the prompt. Possible options are '1' or '2'.
-		sample_id (str/int): the ID of an image sample from those available in `json` folder.
+		sample_id (str): the SUBJECT_ID of an image sample from those available in `json` folder.
 		output_length (int): the number of output's tokens.
 		write_prompt_to_file (bool): whether or not to save the output to file.
 		write_metrics_to_file (bool): whether or not to save the metrics to file.
@@ -74,7 +74,7 @@ def get_explanations(
 	)
 	readable_output = tokenizer.decode(outputs[0][inputs.shape[-1]:], skip_special_tokens=True)
 	end = time.time()
-	metrics = _get_metrics(model_key, lang, prompt_id, prompt, readable_output)
+	metrics = _get_metrics(model_key, lang, prompt_id, sample_id, prompt, readable_output)
 	metrics['inference_time'] = end - start
 	if write_prompt_to_file:
 		with open(os.path.join(output_path, model_id.split('/')[-1] + '.md'), 'a') as f:
@@ -97,7 +97,7 @@ def get_explanations_via_groq(
 		lang,
 		model_key,
 		prompt_id,
-		sample_id = 2,
+		sample_id,
 		output_length = 1024,
 		write_prompt_to_file = False,
 		write_metrics_to_file = True,
@@ -111,7 +111,7 @@ def get_explanations_via_groq(
 		lang (str): the language of the experiment.
 		model_key (str): the model ID according to Groq API (See: https://console.groq.com/docs/models).
 		prompt_id (str/int): the ID of the prompt. Possible options are '1' or '2'.
-		sample_id (str/int): the ID of an image sample from those available in `json` folder.
+		sample_id (str): the SUBJECT_ID of an image sample from those available in `json` folder.
 		output_length (int): the number of output's tokens.
 		write_prompt_to_file (bool): whether or not to save the output to file.
 		write_metrics_to_file (bool): whether or not to save the metrics to file.
@@ -138,7 +138,7 @@ def get_explanations_via_groq(
 		)
 		readable_output = chat_completion.choices[0].message.content
 		end = time.time()
-		metrics = _get_metrics(model_key, lang, prompt_id, prompt, readable_output)
+		metrics = _get_metrics(model_key, lang, prompt_id, sample_id, prompt, readable_output)
 		metrics['inference_time'] = end - start
 		if write_prompt_to_file:
 			with open(os.path.join(output_path, model_id.split('/')[-1] + '.md'), 'a') as f:
@@ -194,13 +194,13 @@ def _get_prompt(lang, prompt_id, json_path, sample_id):
 		lang (str): the language of the experiment.
 		prompt_id (str/int): the ID of the prompt. Possible options are '1' or '2'.
 		json_path (str): the folder where to find the JSON description files.
-		sample_id (str/int): the test sample ID from those available in `json` folder.
+		sample_id (str): the test sample SUBJECT_ID from those available in `json` folder.
 	Returns:
 		prompt (str): the full input prompt.
 	"""
 	_prompt = get_prompt()
 	prompt = _prompt.get(lang).get('prompt_' + str(prompt_id))
-	sample_name = 'SegResNet_sample_' + str(sample_id) + '_' + lang.upper() + '.json'
+	sample_name = 'SegResNet_' + sample_id + '_' + lang.upper() + '.json'
 	if sample_name in os.listdir(json_path):
 		with open(os.path.join(json_path, sample_name), 'r') as f:
 			d = json.load(f)
@@ -213,13 +213,14 @@ def _get_prompt(lang, prompt_id, json_path, sample_id):
 	return prompt
 
 
-def _get_metrics(model_key, lang, prompt_id, prompt, output):
+def _get_metrics(model_key, lang, prompt_id, sample_id, prompt, output):
 	"""
 	Returns the computed metrics.
 	Args:
 		model_key (str): the LLM identifier.
 		lang (str): the language of the experiment.
 		prompt_id (str): the ID of the prompt. Possible options are '1' or '2'.
+		sample_id (str): the test sample SUBJECT_ID from those available in `json` folder.
 		prompt (str): the full input prompt.
 		output (str): the LLM output to evaluate.
 	Returns:
@@ -258,6 +259,7 @@ def _get_metrics(model_key, lang, prompt_id, prompt, output):
 	return {
 		'model': model_key,
 		'lang': lang,
+		'sample_id': sample_id,
 		'prompt_id': prompt_id,
 		'diversity_TTR': ttr,
 		'diversity_MAAS': maas,

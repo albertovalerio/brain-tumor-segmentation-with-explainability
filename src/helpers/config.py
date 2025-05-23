@@ -42,8 +42,8 @@ CONFIG = {
 		'llamantino2': 'swap-uniba/LLaMAntino-2-chat-7b-hf-UltraChat-ITA',
 		'llamantino3': 'swap-uniba/LLaMAntino-3-ANITA-8B-Inst-DPO-ITA',
 		'groq_llama': 'llama3-70b-8192',
-		'groq_mixtral': 'mixtral-8x7b-32768',
-		'groq_gemma': 'gemma-7b-it'
+		'groq_mixtral': 'mistral-saba-24b',
+		'groq_gemma': 'gemma2-9b-it'
 	},
 	'LLM_PARAMS':				{
 		'hf': {
@@ -55,9 +55,9 @@ CONFIG = {
 			'llamantino3': '8B'
 		},
 		'groq': {
-			'gemma': '7B',
+			'gemma': '9B',
 			'llama': '70B',
-			'mixtral': '7B',
+			'mixtral': '24B',
 		}
 	}
 }

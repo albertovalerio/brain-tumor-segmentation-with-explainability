@@ -87,15 +87,18 @@ def train_test_splitting(
 	train_data, eval_data, test_data = {}, {}, {}
 	train_data = [dict({
 		'image': [os.path.join(s, s.split('/')[-1] + '-' + m + '.nii.gz') for m in modes],
-		'label': train_labels[i]
+		'label': train_labels[i],
+		'subject': s.split('/')[-1]
 	}) for i, s in enumerate(train_sessions)]
 	eval_data = [dict({
 		'image': [os.path.join(s, s.split('/')[-1] + '-' + m + '.nii.gz') for m in modes],
-		'label': eval_labels[i]
+		'label': eval_labels[i],
+		'subject': s.split('/')[-1]
 	}) for i, s in enumerate(eval_sessions)]
 	test_data = [dict({
 		'image': [os.path.join(s, s.split('/')[-1] + '-' + m + '.nii.gz') for m in modes],
-		'label': test_labels[i]
+		'label': test_labels[i],
+		'subject': s.split('/')[-1]
 	}) for i, s in enumerate(test_sessions)]
 	if verbose:
 		print(''.join(['> ' for i in range(40)]))
@@ -317,7 +320,7 @@ def predict_model(
 	ministep=4,
 	num_workers=4,
 	write_to_file=True,
-	save_sample=True,
+	save_sample=3,
 	return_prediction=False,
 	verbose=False
 ):
@@ -332,7 +335,7 @@ def predict_model(
 		num_workers (int): setting multi-process data loading.
 		ministep (int): number of interval of data to load on RAM.
 		write_to_file (bool): whether to write results to csv file.
-		save_sample (bool): whether to save predicted image samples.
+		save_sample (int): number of predicted image samples to save into `predictions` folder.
 		return_prediction (bool): whether or not return the predicted mask.
 		verbose (bool): whether or not print information.
 	Returns:
@@ -341,8 +344,9 @@ def predict_model(
 	# unfolds grouped data/init model and utils
 	device = torch.device(device)
 	model = model.to(device)
-	samples, predictions, counter = [], [], 0
-	sample_ids = random.sample(range(0, len(data)), 3) if save_sample else []
+	predictions, counter = [], 0
+	subjects = sorted([t['subject'] for t in data])
+	samples_random = random.sample(subjects, save_sample)
 	ministep = ministep if (len(data) > 5 and ministep > 1) else 2
 	ministeps_test = np.linspace(0, len(data), ministep).astype(int)
 	test_transform, post_test_transforms = transforms
@@ -372,16 +376,25 @@ def predict_model(
 					val_inputs = val_data['image'].to(device)
 					val_data['pred'] = inference(val_inputs, device, model)
 					val_data = [post_test_transforms(i) for i in decollate_batch(val_data)]
-					if counter in sample_ids:
-						samples.append({'image': val_data[0]['image'], 'label': val_data[0]['label'], 'pred': val_data[0]['pred']})
+					# save samples images
+					if val_data[0]['subject'] in samples_random:
+						sample = {
+							'image': val_data[0]['image'],
+							'label': val_data[0]['label'],
+							'pred': val_data[0]['pred']
+						}
+						for k in sample.keys():
+							nii_image = nib.Nifti1Image(sample[k].detach().cpu().numpy(), affine=np.eye(4))
+							filename = model.name + '_' + val_data[0]['subject'] + '_' + k + '.nii.gz'
+							nib.save(nii_image, os.path.join(preds_path, filename))
 					if return_prediction:
-						predictions.append({'image': val_data[0]['image'], 'label': val_data[0]['label'], 'pred': val_data[0]['pred']})
+						predictions.append({'image': val_data[0]['image'], 'label': val_data[0]['label'], 'pred': val_data[0]['pred'], 'subject': val_data[0]['subject']})
 					val_outputs, val_labels = from_engine(['pred', 'label'])(val_data)
 					# compute metrics
 					dice_metric_batch(y_pred=val_outputs, y=val_labels)
 					hausdorff_metric_batch(y_pred=val_outputs, y=val_labels)
 					counter += 1
-					if verbose and ((counter - 1) == 0 or (counter % 20) == 0):
+					if verbose and ((counter - 1) == 0 or (counter % int(len(data) / 5)) == 0):
 						print(f"inference {counter}/{len(data)}")
 						log.write('['+get_date_time()+'] EXECUTING.'+model.name+' INFERENCE '+str(counter)+' OF '+str(len(data))+' \n')
 						log.flush()
@@ -408,13 +421,6 @@ def predict_model(
 						'datetime': get_date_time()
 					}
 				)
-			# save samples images
-			if save_sample:
-				for i, s in enumerate(samples):
-					for k in s.keys():
-						nii_image = nib.Nifti1Image(s[k].detach().cpu().numpy(), affine=np.eye(4))
-						filename = model.name + '_sample_' + str(i + 1) + '_' + k + '.nii.gz'
-						nib.save(nii_image, os.path.join(preds_path, filename))
 
 			log.write('['+get_date_time()+'] Predictions ended.EXECUTING: ' + model.name + '\n')
 			log.flush()

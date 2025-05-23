@@ -152,7 +152,7 @@ def write_evaluation_report(
 			paths = paths,
 			num_workers = 0,
 			write_to_file = False,
-			save_sample = False,
+			save_sample = 0,
 			return_prediction = True
 		)
 		mask_data = prediction[0]['pred'].detach().cpu().numpy()

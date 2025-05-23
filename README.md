@@ -102,7 +102,8 @@ cp .env.example .env
 │   │   ├── preprocessing.py
 │   │   └── training.py
 │   │
-│   └── main.py                  <- Python script for the execution of the whole pipeline.
+│   ├── main.py                  <- Script for training and testing segmentation models.
+│   └── report_generator.py      <- Script for medical reports generation.
 │
 ├── .env.example                 <- Environment variables.
 ├── .gitignore                   <- Specifications of files to be ignored by Git.
