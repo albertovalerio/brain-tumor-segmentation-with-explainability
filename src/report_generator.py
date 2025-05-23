@@ -92,12 +92,12 @@ if __name__ == "__main__":
 			# making predictions
 			_, predictions = predict_model(
 				model = model,
-				data = test_data[:6],
+				data = test_data,
 				transforms = [eval_transform, post_test_transform],
 				device = 'cpu', # get_device(),
 				paths = [saved_path, reports_path, preds_path, logs_path],
 				write_to_file = False,
-				save_sample = len(test_data[:6]),
+				save_sample = len(test_data),
 				return_prediction = True,
 				verbose = True
 			)
