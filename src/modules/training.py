@@ -415,9 +415,11 @@ def predict_model(
 						'dice_score_et': metrics[0][0],
 						'dice_score_tc': metrics[0][1],
 						'dice_score_wt': metrics[0][2],
+						'dice_score_mean': np.mean([metrics[0][0], metrics[0][1], metrics[0][2]]),
 						'hausdorff_score_et': metrics[1][0],
 						'hausdorff_score_tc': metrics[1][1],
 						'hausdorff_score_wt': metrics[1][2],
+						'hausdorff_score_mean': np.mean([metrics[1][0], metrics[1][1], metrics[1][2]]),
 						'datetime': get_date_time()
 					}
 				)

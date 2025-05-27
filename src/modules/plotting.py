@@ -7,8 +7,9 @@ import pandas as pd
 import numpy as np
 from nilearn import plotting
 import nibabel as nib
-from src.helpers.utils import get_colored_mask, get_slice, get_brats_classes
+from src.helpers.utils import get_colored_mask, get_slice, get_brats_classes, compute_bootstrap_ci, compute_sd_iqr, compute_statistical_test
 from src.helpers.config import get_config
+import itertools
 
 
 def random_samples(folder, n_samples, axis):
@@ -294,11 +295,13 @@ def prediction(model_name, folder):
 		print(''.join(['> ' for i in range(30)]) + '\n')
 
 
-def results(folder):
+def results(folder, rnd = 4, ci = 95):
 	"""
 	Plot all metrics calculated over the testing set.
 	Args:
 		folder (str): the path of the folder containing the csv reports.
+		rnd (int): number of rounding digits.
+		ci (int): confidence level (e.g., 95 for 95% CI).
 	Returns:
 		None.
 	"""
@@ -306,18 +309,39 @@ def results(folder):
 		p = os.path.join(folder, 'results.csv')
 		df = pd.read_csv(p)
 		for metric in ['dice', 'hausdorff']:
-			print(''.join(['> ' for i in range(40)]))
-			print(f'\n{"":<20}{metric.upper()+"_ET":<15}{metric.upper()+"_TC":<15}{metric.upper()+"_WT":<15}{metric.upper()+"_AVG":<15}\n')
-			print(''.join(['> ' for i in range(40)]))
-			for model in df['model']:
-				et = df[df["model"] == model][metric+"_score_et"].values[0]
-				tc = df[df["model"] == model][metric+"_score_tc"].values[0]
-				wt = df[df["model"] == model][metric+"_score_wt"].values[0]
-				if model == 'SegResNet':
-					print(f'\033[1m{model:<20}{et:<15.4f}{tc:<15.4f}{wt:<15.4f}{np.mean([et, tc, wt]):<15.4f}\033[0m')
+			print(''.join(['> ' for i in range(50)]))
+			print(f'\n{"":<20}{metric.upper()+"_ET":<20}{metric.upper()+"_TC":<20}{metric.upper()+"_WT":<20}{metric.upper()+"_AVG":<20}\n')
+			print(''.join(['> ' for i in range(50)]))
+			for model in df['model'].unique():
+				if metric is 'dice':
+					et = df[df["model"] == model]["dice_score_et"].to_numpy()
+					et_mean, et_lower, et_upper = compute_bootstrap_ci(et, ci=ci)
+					et_s = '[' + str(round(et_lower, rnd)) + ',' + str(round(et_upper, rnd)) + ']'
+					tc = df[df["model"] == model]["dice_score_tc"].to_numpy()
+					tc_mean, tc_lower, tc_upper = compute_bootstrap_ci(tc, ci=ci)
+					tc_s = '[' + str(round(tc_lower, rnd)) + ',' + str(round(tc_upper, rnd)) + ']'
+					wt = df[df["model"] == model]["dice_score_wt"].to_numpy()
+					wt_mean, wt_lower, wt_upper = compute_bootstrap_ci(wt, ci=ci)
+					wt_s = '[' + str(round(wt_lower, rnd)) + ',' + str(round(wt_upper, rnd)) + ']'
+					mn = df[df["model"] == model]["dice_score_mean"].to_numpy()
+					mn_mean, mn_lower, mn_upper = compute_bootstrap_ci(mn, ci=ci)
+					mn_s = '[' + str(round(mn_lower, rnd)) + ',' + str(round(mn_upper, rnd)) + ']'
+					if model == 'SegResNet':
+						print(f'\033[1m{model:<24}{str(round(et_mean, rnd)):<20}{str(round(tc_mean, rnd)):<20}{str(round(wt_mean, rnd)):<20}{str(round(mn_mean, rnd)):<20}\033[0m')
+						print(f'\033[1m{model+"_CI_"+str(ci)+"%":<20}{et_s:<20}{tc_s:<20}{wt_s:<20}{mn_s:<20}\033[0m')
+					else:
+						print(f'{model:<24}{str(round(et_mean, rnd)):<20}{str(round(tc_mean, rnd)):<20}{str(round(wt_mean, rnd)):<20}{np.mean([et_mean, tc_mean, wt_mean]):<20.4f}')
+						print(f'{model+"_CI_"+str(ci)+"%":<20}{et_s:<20}{tc_s:<20}{wt_s:<20}{mn_s:<20}')
 				else:
-					print(f'{model:<20}{et:<15.4f}{tc:<15.4f}{wt:<15.4f}{np.mean([et, tc, wt]):<15.4f}')
-		print(''.join(['> ' for i in range(40)]))
+					et = round(df[df["model"] == model][metric+"_score_et"].mean(), rnd)
+					tc = round(df[df["model"] == model][metric+"_score_tc"].mean(), rnd)
+					wt = round(df[df["model"] == model][metric+"_score_wt"].mean(), rnd)
+					mn = round(np.mean([et, tc, wt]), rnd)
+					if model == 'SegResNet':
+						print(f'\033[1m{model:<20}{et:<20}{tc:<20}{wt:<20}{mn:<20}\033[0m')
+					else:
+						print(f'{model:<20}{et:<20}{tc:<20}{wt:<20}{mn:<20}')
+		print(''.join(['> ' for i in range(50)]))
 	except OSError as e:
 		print('\n' + ''.join(['> ' for i in range(30)]))
 		print('\nERROR: file\033[95m  reports.csv\033[0m not found.\n')
@@ -355,19 +379,19 @@ def llms_metrics(report_path, report_source = 'hf'):
 	llm_params = {k: int(v[:-1]) for k, v in llm_params.items()}
 	llm_params = {k: v for k, v in sorted(llm_params.items(), key = lambda item: item[1], reverse = False)}
 	df = pd.read_csv(os.path.join(report_path, 'LLM_metrics_' + report_source.upper() + '.csv'))
-	llm_times = df.loc[:, df.columns != 'lang'].groupby('model').mean()['inference_time'].to_dict()
+	llm_times = df.loc[:, (df.columns != 'lang') & (df.columns != 'sample_id')].groupby('model').mean()['inference_time'].to_dict()
 	llm_times = {k: v for k, v in sorted(llm_times.items(), key = lambda item: item[1], reverse = False)}
 	fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 6))
 	rects = ax1.barh(list(llm_params.keys()), list(llm_params.values()), align='center', height=0.5)
 	ax1.bar_label(rects, [str(i) + 'B' for i in list(llm_params.values())], padding=-30, color='white', fontsize=16, fontweight='bold')
-	ax1.set_xticks(np.arange(0, max(list(llm_params.values())) + 1))
+	ax1.set_xticks(np.arange(0, max(list(llm_params.values())) + 1, (5 if max(list(llm_params.values())) > 10 else 2)))
 	ax1.set_yticks(ticks=list(llm_params.keys()), labels=list(llm_params.keys()), fontsize=14)
 	ax1.xaxis.grid(True, linestyle='--', which='major', color='grey', alpha=.25)
 	ax1.set_title('Number of params', fontsize=20, fontweight='bold')
 	ax1.set_xlabel('Number of params (in billions)', fontsize=14)
 	rects = ax2.barh(list(llm_times.keys()), list(llm_times.values()), align='center', height=0.5)
 	ax2.bar_label(rects, [str(int(i)) + 's' for i in list(llm_times.values())], padding=-48, color='white', fontsize=16, fontweight='bold')
-	ax2.set_xticks(np.arange(0, max(list(llm_times.values())) + 10, 50))
+	ax2.set_xticks(np.arange(0, max(list(llm_times.values())) + 1, (50 if max(list(llm_times.values())) > 100 else 2)))
 	ax2.set_yticks(ticks=list(llm_times.keys()), labels=list(llm_times.keys()), fontsize=14)
 	ax2.xaxis.grid(True, linestyle='--', which='major', color='grey', alpha=.25)
 	ax2.set_title('Inference times', fontsize=20, fontweight='bold')
@@ -396,6 +420,7 @@ def llms_textual_metrics(
 		None.
 	"""
 	df = pd.read_csv(os.path.join(report_path, 'LLM_metrics_' + report_source.upper() + '.csv'))
+	df = df.loc[:, df.columns != 'sample_id']
 	llm_en = df[df['lang'] == 'EN']['model'].unique()
 	llm_it = df[df['lang'] == 'IT']['model'].unique()
 	left_ylabels = ['English', 'Italian']
@@ -442,28 +467,36 @@ def llms_average_metrics(report_path, report_source = 'hf', lang = 'all', roundi
 		None.
 	"""
 	df = pd.read_csv(os.path.join(report_path, 'LLM_metrics_' + report_source.upper() + '.csv'))
-	metrics = [m for m in df.columns if m not in ['model', 'lang', 'prompt_id']]
+	metrics = [m for m in df.columns if m not in ['model', 'lang', 'sample_id', 'prompt_id']]
 	llms = df['model'].unique() if lang == 'all' else df[df['lang'] == lang]['model'].unique()
 	print(''.join(['> ' for i in range(55)]))
 	sm = 'METRIC' + ''.join([' ' for i in range(20)])
 	for m in llms:
-		sm += m.upper() + ''.join([' ' for i in range(14 - len(m))])
+		sm += m.upper() + ''.join([' ' for i in range(28 - len(m))])
 	print('\n', sm, '\n')
 	print(''.join(['> ' for i in range(55)]))
 	for m in metrics:
 		if lang.lower() == 'all':
-			data = [df.loc[df['model'] == l][m].mean() for l in llms]
+			data = [compute_sd_iqr(df.loc[df['model'] == l][m].to_numpy()) for l in llms]
+			means = [i['mean'] for i in data]
 		else:
-			data = [df.loc[(df['model'] == l) & (df['lang'] == lang.upper())][m].mean() for l in llms]
-		s = ''
+			data = [compute_sd_iqr(df.loc[(df['model'] == l) & (df['lang'] == lang.upper())][m].to_numpy()) for l in llms]
+			means = [i['mean'] for i in data]
+		s, q, q13 = '', '', ''
 		for k, d in enumerate(data):
-			ds = str(round(d, rounding))
-			s += ''.join([' ' for i in range(14 - len(ds))])
+			ds = str(round(means[k], rounding)) + ' ± ' + str(round(data[k]['std_dev'], rounding)) + '(SD)'
+			dq = 'IQR: ' + str(round(d['iqr'], rounding))
+			dq13 = '(Q1=' + str(round(d['q1'], rounding)) + ', Q3=' + str(round(d['q3'], rounding)) + ')'
+			s += ''.join([' ' for i in range(24 - len(ds))])
+			q += ''.join([' ' for i in range(24 - len(dq))]) + dq
+			q13 += ''.join([' ' for i in range(24 - len(dq13))]) + dq13
 			if m == 'inference_time' or m == 'diversity_MAAS':
-				s += ('\033[1m\033[91m'+ds+'\033[0m' if k == np.argmax(data) else ('\033[1m\033[92m'+ds+'\033[0m' if k ==  np.argmin(data) else ds))
+				s += ('\033[1m\033[91m'+ds+'\033[0m' if k == np.argmax(means) else ('\033[1m\033[92m'+ds+'\033[0m' if k ==  np.argmin(means) else ds))
 			else:
-				s += ('\033[1m\033[92m'+ds+'\033[0m' if k == np.argmax(data) else ('\033[1m\033[91m'+ds+'\033[0m' if k ==  np.argmin(data) else ds))
+				s += ('\033[1m\033[92m'+ds+'\033[0m' if k == np.argmax(means) else ('\033[1m\033[91m'+ds+'\033[0m' if k ==  np.argmin(means) else ds))
 		print(f'{m:<24}{s:>14}')
+		print(f'{"":<24}{q:>14}')
+		print(f'{"":<24}{q13:>14}\n')
 
 
 def evaluation_error(
@@ -537,3 +570,30 @@ def evaluation_error(
 	plt.legend()
 	fig.tight_layout()
 	plt.show()
+
+
+def statistical_test(report_path, report_source = 'hf', lang = 'all'):
+	"""
+	Plot the results of the statistical test for each pair of LLMs in report file.
+	Args:
+		report_path (str): absolute path where metrics data are saved.
+		report_source (str): the data source (`hf` for HuggingFace, `groq` for Groq)
+		lang (str): the language by which aggregate the results. Deafult `all` do not filter by language.
+	Returns:
+		None.
+	"""
+	df = pd.read_csv(os.path.join(report_path, 'LLM_metrics_' + report_source.upper() + '.csv'))
+	metrics = [m for m in df.columns if m not in ['model', 'lang', 'sample_id', 'prompt_id', 'inference_time']]
+	llms = df['model'].unique() if lang == 'all' else df[df['lang'] == lang]['model'].unique()
+	pairs = list(itertools.combinations(llms, 2))
+	for p in pairs:
+		print('\n')
+		print(''.join(['> ' for i in range(55)]))
+		print(f'\n{p[0].upper()+"-"+p[1].upper():>40}\n')
+		print(f'\n{"METRIC":<25}{"TEST":<25}{"P-VALUE":<10}{"SIGNIFICANT":<10}\n')
+		print(''.join(['> ' for i in range(55)]))
+		for m in metrics:
+			metric_a = df[df["model"] == p[0]][m].to_numpy()
+			metric_b = df[df["model"] == p[1]][m].to_numpy()
+			results = compute_statistical_test(metric_a, metric_b)
+			print(f'{m:<25}{results["test_name"]:<25}{results["p_value"]:<10.4f}{str(results["significant"]):<10}')

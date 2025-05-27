@@ -12,9 +12,10 @@ from src.helpers.config import get_config
 from dotenv import dotenv_values
 import synapseclient
 import synapseutils
+from scipy.stats import ttest_rel, wilcoxon, shapiro
 
 
-__all__ = ['make_dataset', 'get_colored_mask', 'get_brats_classes', 'get_slice', 'get_device', 'get_date_time']
+__all__ = ['make_dataset', 'get_colored_mask', 'get_brats_classes', 'get_slice', 'get_device', 'get_date_time', 'compute_bootstrap_ci']
 
 
 def make_dataset(dataset, verbose=True, base_path=''):
@@ -191,7 +192,8 @@ def get_date_time():
 
 
 def save_results(file, metrics):
-	"""Save the metrics to csv file.
+	"""
+	Save the metrics to csv file.
 	Args:
 		file (str): the file path where to save data.
 		metrics (dict): the metrics of the experiment.
@@ -207,3 +209,71 @@ def save_results(file, metrics):
 			csvwriter = csv.writer(outfile, delimiter=',')
 			csvwriter.writerow(metrics)
 			csvwriter.writerow(metrics.values())
+
+
+def compute_bootstrap_ci(metric_values, num_bootstrap=1000, ci=95, random_seed=42):
+	"""
+	Compute bootstrap confidence interval for a list/array of metric values.
+	Args:
+		metric_values (list|np.ndarray): list of per-sample metric values (e.g., Dice scores).
+		num_bootstrap (int): number of bootstrap resamples.
+		ci (int): confidence level (e.g., 95 for 95% CI).
+		random_seed (int): random seed for reproducibility.
+	Returns:
+		(float, float, float): Mean, lower bound, upper bound of CI.
+	"""
+	np.random.seed(random_seed)
+	metric_values = np.array(metric_values)
+	n = len(metric_values)
+	bootstrapped_means = []
+	for _ in range(num_bootstrap):
+		sample = np.random.choice(metric_values, size=n, replace=True)
+		bootstrapped_means.append(np.mean(sample))
+	lower = np.percentile(bootstrapped_means, (100 - ci) / 2)
+	upper = np.percentile(bootstrapped_means, 100 - (100 - ci) / 2)
+	mean = np.mean(metric_values)
+	return mean, lower, upper
+
+
+def compute_sd_iqr(metric_values):
+	"""
+	Compute mean, standard deviation (SD), and interquartile range (IQR) for a list of metric values.
+	Args:
+		metric_values (list or np.ndarray): metric values across the test set.
+	Returns:
+		dict: dictionary containing mean, SD, IQR (Q1, Q3).
+	"""
+	values = np.array(metric_values)
+	mean = np.mean(values)
+	std = np.std(values, ddof=1)
+	q1 = np.percentile(values, 25)
+	q3 = np.percentile(values, 75)
+	iqr = q3 - q1
+	return {'mean': mean, 'std_dev': std, 'iqr': iqr, 'q1': q1, 'q3': q3}
+
+
+def compute_statistical_test(metric_a, metric_b, method='auto'):
+	"""
+	Perform paired statistical test between two LLMs on a given metric.
+	Args:
+		metric_a (list or np.ndarray): metric values from LLM A (e.g., Gemma).
+		metric_b (list or np.ndarray): metric values from LLM B (e.g., Llama).
+		method (str): `t-test`, `wilcoxon`, or `auto` to decide based on normality.
+	Returns:
+		dict: test used, p-value, and significance interpretation.
+	"""
+	metric_a = np.array(metric_a)
+	metric_b = np.array(metric_b)
+	diff = metric_a - metric_b
+	if method == 'auto':
+		_, p_shapiro = shapiro(diff)
+		method = 't-test' if p_shapiro > 0.05 else 'wilcoxon'
+	if method == 't-test':
+		_, p = ttest_rel(metric_a, metric_b)
+		test_name = 'Paired t-test'
+	elif method == 'wilcoxon':
+		_, p = wilcoxon(metric_a, metric_b)
+		test_name = 'Wilcoxon signed-rank'
+	else:
+		raise ValueError("Method must be 't-test', 'wilcoxon', or 'auto'.")
+	return {'test_name': test_name, 'p_value': p, 'significant': p < 0.05}

@@ -90,7 +90,7 @@ if __name__ == "__main__":
 			) = get_transformations(roi_size=(128, 128, 128) if model.name == 'SwinUNETR' else (224, 224, 144))
 
 			# making predictions
-			_, predictions = predict_model(
+			_, _ = predict_model(
 				model = model,
 				data = test_data,
 				transforms = [eval_transform, post_test_transform],
@@ -103,12 +103,13 @@ if __name__ == "__main__":
 			)
 
 			# generating reports
-			for k, p in enumerate(predictions):
+			subjects = np.unique(sorted([s.split('_')[1] for s in os.listdir(os.path.join(_base_path, preds_path)) if 'SegResNet_BraTS' in s]))
+			for k, s in enumerate(subjects):
 
-				print('GENERATING REPORT: ', str(k + 1) + '/' + str(len(predictions)))
+				print('GENERATING REPORT: ', str(k + 1) + '/' + str(len(subjects)))
 
 				# brain atlas registration
-				example_name = model_name + '_' + p['subject']
+				example_name = model_name + '_' + s
 				mask = nib.load(os.path.join(preds_path, example_name + '_pred.nii.gz'))
 				tc = mask.get_fdata()[1]
 				mni_template = datasets.load_mni152_template()
@@ -137,7 +138,7 @@ if __name__ == "__main__":
 						lang = 'EN',
 						model_key = l,
 						prompt_id = '2',
-						sample_id = p['subject'],
+						sample_id = s,
 						output_length = 1024,
 						write_prompt_to_file = False,
 						write_metrics_to_file = True,
